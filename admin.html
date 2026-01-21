@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Me NU | Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Admin specific styles */
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, var(--primary), #00509E);
+            color: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+        
+        .admin-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .admin-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--light-gray);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .stat-card p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .pending-users {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--light-gray);
+            margin-top: 30px;
+        }
+        
+        .user-card {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+            padding: 25px;
+            border: 1px solid var(--light-gray);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: var(--light);
+            transition: var(--transition);
+        }
+        
+        .user-card:hover {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .user-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .user-info h4 {
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .user-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .detail-item {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .detail-item strong {
+            color: var(--dark);
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-approve, .btn-reject {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .btn-approve {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-reject {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--light-gray);
+        }
+        
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+        
+        .login-form {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        
+        .login-form h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .login-form button {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .login-form button:hover {
+            background: #002244;
+        }
+        
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+        
+        .admin-nav a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .admin-nav a:hover {
+            background: var(--light);
+        }
+        
+        /* Clickable Stat Cards */
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .stat-card.clickable:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+        
+        .stat-card.clickable small {
+            display: block;
+            color: var(--primary);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+        
+        .stat-card.clickable::after {
+            content: '👁️';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .stat-card.clickable:hover::after {
+            opacity: 1;
+        }
+        
+        /* Modal Styles for Admin */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlide 0.3s ease;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--light);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .modal-header h2 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: var(--transition);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .modal-body {
+            padding: 0;
+        }
+        
+        /* User and Item Rows in Modal */
+        .user-row:hover,
+        .item-row:hover {
+            background: var(--light);
+            cursor: default;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .user-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+            
+            .user-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="admin-app"></div>
+
+    <script>
+        // Admin Database (shared with main app)
+        class AdminDatabase {
+            constructor() {
+                this.usersKey = 'dealme_nu_users';
+                this.adminPassword = 'admin123'; // Simple password for demo
+            }
+            
+            getUsers() {
+                return JSON.parse(localStorage.getItem(this.usersKey)) || [];
+            }
+            
+            saveUsers(users) {
+                localStorage.setItem(this.usersKey, JSON.stringify(users));
+            }
+            
+            getPendingUsers() {
+                const users = this.getUsers();
+                return users.filter(user => user.status === 'pending');
+            }
+            
+            approveUser(userId) {
+                const users = this.getUsers();
+                const userIndex = users.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    users[userIndex].status = 'approved';
+                    this.saveUsers(users);
+                    return true;
+                }
+                return false;
+            }
+            
+            // UPDATED: Mark as rejected instead of deleting
+            rejectUser(userId) {
+                const users = this.getUsers();
+                const userIndex = users.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    users[userIndex].status = 'rejected';
+                    users[userIndex].rejected_at = new Date().toISOString();
+                    this.saveUsers(users);
+                    return true;
+                }
+                return false;
+            }
+            
+            // NEW: Get rejected users
+            getRejectedUsers() {
+                const users = this.getUsers();
+                return users.filter(user => user.status === 'rejected');
+            }
+            
+            getStats() {
+                const users = this.getUsers();
+                const items = JSON.parse(localStorage.getItem('dealme_nu_items')) || [];
+                const rejectedUsers = this.getRejectedUsers();
+                
+                return {
+                    totalUsers: users.length,
+                    pendingUsers: users.filter(u => u.status === 'pending').length,
+                    approvedUsers: users.filter(u => u.status === 'approved').length,
+                    totalItems: items.length,
+                    activeItems: items.filter(i => i.status === 'available').length,
+                    soldItems: items.filter(i => i.status === 'sold').length,
+                    rejectedUsers: rejectedUsers.length // NEW: Include rejected count
+                };
+            }
+        }
+        
+        class AdminApp {
+            constructor() {
+                this.db = new AdminDatabase();
+                this.init();
+            }
+            
+            init() {
+                this.checkAuth();
+            }
+            
+            checkAuth() {
+                const isAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
+                
+                if (isAuthenticated) {
+                    this.loadAdminPanel();
+                } else {
+                    this.loadLoginForm();
+                }
+            }
+            
+            loadLoginForm() {
+                const app = document.getElementById('admin-app');
+                app.innerHTML = `
+                    <div class="login-form">
+                        <h2><i class="fas fa-lock"></i> Admin Access</h2>
+                        <p style="color: var(--gray); margin-bottom: 30px;">Enter admin password to continue</p>
+                        <input type="password" id="admin-password" placeholder="Enter admin password">
+                        <button onclick="adminApp.handleLogin()">Access Admin Panel</button>
+                        <p style="margin-top: 20px; color: var(--gray); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> Demo Password: admin123
+                        </p>
+                        <div id="login-error" style="color: var(--accent); margin-top: 10px; font-size: 0.9rem;"></div>
+                    </div>
+                `;
+            }
+            
+            handleLogin() {
+                const password = document.getElementById('admin-password').value;
+                const errorElement = document.getElementById('login-error');
+                
+                if (password === this.db.adminPassword) {
+                    localStorage.setItem('admin_authenticated', 'true');
+                    this.loadAdminPanel();
+                } else {
+                    if (errorElement) {
+                        errorElement.textContent = 'Incorrect password';
+                    }
+                }
+            }
+            
+            loadAdminPanel() {
+                const stats = this.db.getStats();
+                const pendingUsers = this.db.getPendingUsers();
+                const rejectedUsers = this.db.getRejectedUsers(); // NEW: Get rejected users
+                
+                const app = document.getElementById('admin-app');
+                app.innerHTML = `
+                    <div class="admin-container">
+                        <div class="admin-nav">
+                            <h1 style="color: var(--primary);">
+                                <i class="fas fa-shield-alt"></i> Deal Me NU Admin
+                            </h1>
+                            <a href="#" onclick="adminApp.logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                        
+                        <div class="admin-header">
+                            <h1>Registration Approvals</h1>
+                            <p>Review and approve student registrations</p>
+                        </div>
+                        
+                        <!-- UPDATED STATS GRID WITH CLICKABLE CARDS -->
+                        <div class="stats-grid">
+                            <div class="stat-card clickable" onclick="adminApp.showUserList('all')">
+                                <h3>${stats.totalUsers}</h3>
+                                <p>Total Users</p>
+                                <small>Click to view list</small>
+                            </div>
+                            <div class="stat-card clickable" onclick="adminApp.showUserList('pending')">
+                                <h3>${stats.pendingUsers}</h3>
+                                <p>Pending Approvals</p>
+                                <small>Click to view list</small>
+                            </div>
+                            <div class="stat-card clickable" onclick="adminApp.showUserList('approved')">
+                                <h3>${stats.approvedUsers}</h3>
+                                <p>Approved Users</p>
+                                <small>Click to view list</small>
+                            </div>
+                            <div class="stat-card clickable" onclick="adminApp.showItemList()">
+                                <h3>${stats.totalItems}</h3>
+                                <p>Total Items</p>
+                                <small>Click to view list</small>
+                            </div>
+                            <div class="stat-card clickable" onclick="adminApp.showUserList('rejected')">
+                                <h3>${rejectedUsers.length}</h3>
+                                <p>Rejected Users</p>
+                                <small>Click to view list</small>
+                            </div>
+                        </div>
+                        
+                        <div class="pending-users">
+                            <h2 style="color: var(--dark); margin-bottom: 25px; font-size: 1.5rem;">
+                                <i class="fas fa-clock"></i> Pending Registrations (${pendingUsers.length})
+                            </h2>
+                            
+                            ${pendingUsers.length === 0 ? `
+                                <div class="empty-state">
+                                    <i class="fas fa-check-circle"></i>
+                                    <p>No pending registrations at the moment</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div id="pending-users-list">
+                                ${pendingUsers.map(user => this.renderUserCard(user)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners for approve/reject buttons
+                pendingUsers.forEach(user => {
+                    document.getElementById(`approve-${user.id}`)?.addEventListener('click', () => this.approveUser(user.id));
+                    document.getElementById(`reject-${user.id}`)?.addEventListener('click', () => this.rejectUser(user.id));
+                });
+            }
+            loadPurchaseHistory() {
+                const content = `<div class="dashboard-content">
+    <div class="section-header">
+        <h2><i class="fas fa-receipt"></i> Purchase History</h2>
+        <p>View all your previous transactions</p>
+    </div>
+
+    <div class="card">
+        <div class="purchase-item">
+            <div>
+                <h4>Order #10234</h4>
+                <small>March 18, 2026 • GCash</small>
+            </div>
+            <div class="purchase-right">
+                <span class="status success">Completed</span>
+                <strong>₱499.00</strong>
+            </div>
+        </div>
+
+        <div class="purchase-item">
+            <div>
+                <h4>Order #10221</h4>
+                <small>March 10, 2026 • Cash</small>
+            </div>
+            <div class="purchase-right">
+                <span class="status warning">Pending</span>
+                <strong>₱250.00</strong>
+            </div>
+        </div>
+
+        <div class="purchase-item">
+            <div>
+                <h4>Order #10198</h4>
+                <small>February 28, 2026 • Card</small>
+            </div>
+            <div class="purchase-right">
+                <span class="status danger">Cancelled</span>
+                <strong>₱320.00</strong>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+    document.getElementById("main-content").innerHTML = content;
+}
+
+            renderUserCard(user) {
+                return `
+                    <div class="user-card" id="user-${user.id}">
+                        <div class="user-avatar">
+                            ${user.full_name.charAt(0)}
+                        </div>
+                        <div class="user-info">
+                            <h4>${user.full_name}</h4>
+                            <p style="color: var(--primary); margin-bottom: 5px;">
+                                <i class="fas fa-graduation-cap"></i> ${user.course} - Year ${user.year_level}
+                            </p>
+                            <div class="user-details">
+                                <div class="detail-item">
+                                    <strong>Student ID</strong>
+                                    ${user.student_id}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Contact Number</strong>
+                                    ${user.contact_number}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>NU Email</strong>
+                                    ${user.google_email}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Personal Email</strong>
+                                    ${user.email}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-approve" id="approve-${user.id}">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn-reject" id="reject-${user.id}">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            approveUser(userId) {
+                if (this.db.approveUser(userId)) {
+                    this.showNotification(`User #${userId} approved successfully`, 'success');
+                    document.getElementById(`user-${userId}`).remove();
+                    this.updateStats();
+                } else {
+                    this.showNotification('Error approving user', 'error');
+                }
+            }
+            
+            rejectUser(userId) {
+                if (this.db.rejectUser(userId)) {
+                    this.showNotification(`User #${userId} rejected`, 'info');
+                    document.getElementById(`user-${userId}`).remove();
+                    this.updateStats();
+                } else {
+                    this.showNotification('Error rejecting user', 'error');
+                }
+            }
+            
+            updateStats() {
+                const stats = this.db.getStats();
+                const rejectedUsers = this.db.getRejectedUsers();
+                
+                // Update the stats cards with new numbers
+                document.querySelectorAll('.stat-card h3').forEach(card => {
+                    const cardText = card.parentElement.querySelector('p').textContent;
+                    if (cardText === 'Total Users') card.textContent = stats.totalUsers;
+                    if (cardText === 'Pending Approvals') card.textContent = stats.pendingUsers;
+                    if (cardText === 'Approved Users') card.textContent = stats.approvedUsers;
+                    if (cardText === 'Total Items') card.textContent = stats.totalItems;
+                    if (cardText === 'Rejected Users') card.textContent = rejectedUsers.length;
+                });
+            }
+            
+            logout() {
+                localStorage.removeItem('admin_authenticated');
+                this.loadLoginForm();
+            }
+            
+            // ============ NEW FUNCTIONS FOR CLICKABLE STATS ============
+            
+            showUserList(filterType) {
+                const users = this.db.getUsers();
+                let filteredUsers = [];
+                let title = '';
+                
+                switch(filterType) {
+                    case 'all':
+                        filteredUsers = users;
+                        title = 'All Users';
+                        break;
+                    case 'pending':
+                        filteredUsers = users.filter(u => u.status === 'pending');
+                        title = 'Pending Users';
+                        break;
+                    case 'approved':
+                        filteredUsers = users.filter(u => u.status === 'approved');
+                        title = 'Approved Users';
+                        break;
+                    case 'rejected':
+                        filteredUsers = users.filter(u => u.status === 'rejected');
+                        title = 'Rejected Users';
+                        break;
+                }
+                
+                this.showUserModal(filteredUsers, title);
+            }
+            
+            showItemList() {
+                const items = JSON.parse(localStorage.getItem('dealme_nu_items')) || [];
+                this.showItemModal(items, 'All Items');
+            }
+            
+            showUserModal(users, title) {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay active';
+                modal.innerHTML = `
+                    <div class="modal" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h2>${title} (${users.length})</h2>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                                ${users.length === 0 ? 
+                                    '<p style="text-align: center; color: var(--gray); padding: 40px;">No users found</p>' :
+                                    users.map(user => this.renderUserRow(user)).join('')
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                modal.querySelector('.modal-close').addEventListener('click', () => {
+                    modal.remove();
+                });
+            }
+            
+            renderUserRow(user) {
+                return `
+                    <div class="user-row" style="display: grid; grid-template-columns: 50px 1fr auto; gap: 15px; align-items: center; padding: 15px; border-bottom: 1px solid var(--light-gray);">
+                        <div class="user-avatar-small" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                            ${user.full_name.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--dark);">${user.full_name}</h4>
+                            <p style="margin: 0; color: var(--gray); font-size: 0.9rem;">${user.email}</p>
+                            <p style="margin: 5px 0 0 0; color: var(--primary); font-size: 0.85rem;">
+                                ${user.course} • ${user.status}
+                            </p>
+                        </div>
+                        <div style="color: ${user.status === 'approved' ? 'var(--success)' : user.status === 'pending' ? 'var(--warning)' : 'var(--accent)'}; font-weight: 500;">
+                            ${user.status.toUpperCase()}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showItemModal(items, title) {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay active';
+                modal.innerHTML = `
+                    <div class="modal" style="max-width: 900px;">
+                        <div class="modal-header">
+                            <h2>${title} (${items.length})</h2>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                                ${items.length === 0 ? 
+                                    '<p style="text-align: center; color: var(--gray); padding: 40px;">No items found</p>' :
+                                    items.map(item => this.renderItemRow(item)).join('')
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                modal.querySelector('.modal-close').addEventListener('click', () => {
+                    modal.remove();
+                });
+            }
+            
+            renderItemRow(item) {
+                return `
+                    <div class="item-row" style="display: grid; grid-template-columns: 60px 1fr auto; gap: 15px; align-items: center; padding: 15px; border-bottom: 1px solid var(--light-gray);">
+                        <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background: var(--light);">
+                            <img src="${item.images[0]}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--dark); font-size: 1rem;">${item.title}</h4>
+                            <p style="margin: 0; color: var(--gray); font-size: 0.9rem;">₱${item.price.toLocaleString()}</p>
+                            <p style="margin: 5px 0 0 0; color: var(--primary); font-size: 0.85rem;">
+                                ${item.category} • ${item.status}
+                            </p>
+                        </div>
+                        <div style="color: ${item.status === 'available' ? 'var(--success)' : item.status === 'sold' ? 'var(--gray)' : 'var(--warning)'}; font-weight: 500;">
+                            ${item.status.toUpperCase()}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showNotification(message, type = 'info') {
+                // Remove existing notifications
+                document.querySelectorAll('.notification-toast').forEach(toast => toast.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = `notification-toast ${type}`;
+                notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                    <button class="close-toast">&times;</button>
+                `;
+                
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                    border-left: 4px solid ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--accent)' : 'var(--primary)'};
+                `;
+                
+                notification.querySelector('.close-toast').addEventListener('click', function() {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                });
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => notification.remove(), 300);
+                    }
+                }, 5000);
+                
+                document.body.appendChild(notification);
+            }
+        }
+        
+        // Initialize admin app
+        const adminApp = new AdminApp();
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+    </script>
+</body>
+</html>
