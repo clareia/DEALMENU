@@ -1634,6 +1634,8 @@ static loadMarketplace() {
         // 5. Render
         this.renderItems(items, container);
     }
+        // ==================== RENDER ITEMS (UPDATED) ====================
+    
     static renderItems(items, container) {
         if (!container) return;
         
@@ -1641,9 +1643,9 @@ static loadMarketplace() {
         
         if (items.length === 0) {
             container.innerHTML = `
-                <div class="no-items">
-                    <i class="fas fa-box-open"></i>
-                    <p>No items found</p>
+                <div class="no-items" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                    <i class="fas fa-box-open" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i>
+                    <p style="color: #888;">No items found matching your criteria</p>
                 </div>
             `;
             return;
@@ -1655,13 +1657,32 @@ static loadMarketplace() {
             const isInWishlist = currentUser ? this.db.isInWishlist(currentUser.id, item.id) : false;
             const isSeller = currentUser && currentUser.id === item.seller_id;
             
+            // Generate the Chat Button logic
+            // If it's my item: Show "View" or nothing
+            // If it's not my item: Show "Chat" button
+            let actionButtons = '';
+            
+            if (isSeller) {
+                actionButtons = `
+                    <button class="btn-sold" style="flex:1; padding:10px; background:#e9ecef; color:#666; border:none; border-radius:8px; cursor:not-allowed;" disabled>
+                        <i class="fas fa-user"></i> Your Item
+                    </button>
+                `;
+            } else {
+                actionButtons = `
+                    <button class="btn-chat" onclick="AppManager.startChat(${item.id})" style="flex:1; padding:10px; background:var(--light); color:var(--primary); border:none; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s;">
+                        <i class="fas fa-comment"></i> Chat
+                    </button>
+                `;
+            }
+
             const itemCard = document.createElement('div');
             itemCard.className = 'item-card';
             itemCard.innerHTML = `
                 <div class="item-image">
                     <img src="${item.images[0]}" alt="${item.title}">
                     <span class="item-status ${item.status}">${item.status.toUpperCase()}</span>
-                    <button class="item-wishlist" data-item-id="${item.id}">
+                    <button class="item-wishlist ${isInWishlist ? 'active' : ''}" onclick="AppManager.toggleWishlist(${item.id}, this)">
                         <i class="${isInWishlist ? 'fas' : 'far'} fa-heart"></i>
                     </button>
                 </div>
@@ -1672,24 +1693,14 @@ static loadMarketplace() {
                         <span><i class="fas fa-user"></i> ${item.seller_name}</span>
                         <span><i class="fas fa-map-marker-alt"></i> ${item.location}</span>
                     </div>
-                    <div class="item-actions">
-                        <button class="btn-chat" data-item-id="${item.id}">
-                            <i class="fas fa-comment"></i>
-                            Chat
-                        </button>
-                        ${isSeller ? `
-                        <button class="btn-sold mark-sold" data-item-id="${item.id}" ${item.status === 'sold' ? 'disabled' : ''}>
-                            <i class="fas fa-check-circle"></i>
-                            ${item.status === 'sold' ? 'Sold' : 'Mark as Sold'}
-                        </button>
-                        ` : ''}
+                    <div class="item-actions" style="display:flex; gap:10px; margin-top:10px;">
+                        ${actionButtons}
                     </div>
                 </div>
             `;
             container.appendChild(itemCard);
         });
     }
-
     static toggleWishlist(itemId, button) {
         const currentUser = this.db.getCurrentUser();
         if (!currentUser) {
@@ -1858,36 +1869,38 @@ static loadMarketplace() {
     }
 
     // ==================== CHAT SYSTEM ====================
+        // ==================== START CHAT LOGIC (UPDATED) ====================
+
     static startChat(itemId) {
         const currentUser = this.db.getCurrentUser();
+        
+        // 1. Check Login
         if (!currentUser) {
-            this.showNotification('Please login to start a chat', 'error');
+            alert('Please login to chat with sellers.');
             return;
         }
 
         const item = this.db.getItems().find(i => i.id === itemId);
         if (!item) return;
 
+        // 2. Prevent chatting with yourself
         if (currentUser.id === item.seller_id) {
-            this.showNotification('You cannot chat with yourself about your own item', 'error');
+            alert("This is your own item!");
             return;
         }
 
-        // Create or get existing chat
+        // 3. Create or Get Existing Chat ID
+        // This method checks if a chat already exists for this item/users
         const chat = this.db.createChat(currentUser.id, item.seller_id, itemId);
         
-        // Add notification for seller
-        this.db.addNotification({
-            user_id: item.seller_id,
-            type: 'new_chat',
-            title: 'New Chat Started',
-            message: `${currentUser.full_name} started a chat about "${item.title}"`
-        });
+        // 4. Load the Chat Page
+        this.loadChat();
 
-        this.showNotification('Chat started! Check your messages.', 'success');
+        // 5. Automatically Open the specific chat
+        // We use setTimeout to ensure the DOM (Sidebar list) is rendered before we try to click it
         setTimeout(() => {
-            this.loadChat();
-        }, 1000);
+            this.openChat(chat.id);
+        }, 100);
     }
 
     static loadChats() {
@@ -2086,12 +2099,37 @@ static loadMarketplace() {
     }
 
     // ==================== NOTIFICATION SYSTEM ====================
-    static loadNotifications() {
-        const currentUser = this.db.getCurrentUser();
-        if (!currentUser) return;
+        // ==================== NOTIFICATIONS LOGIC ====================
 
-        const notifications = this.db.getNotifications(currentUser.id);
-        this.updateNotificationBadge();
+    static loadNotificationsPage() {
+        this.currentPage = 'notifications';
+        const app = document.getElementById('app');
+        
+        // 1. Template
+        const template = document.getElementById('templates').querySelector('#notifications-page');
+        const clone = template.cloneNode(true);
+        clone.removeAttribute('id');
+        app.innerHTML = '';
+        app.appendChild(clone);
+        
+        // 2. Sidebar Info
+        const user = this.db.getCurrentUser();
+        if (user) {
+            const sbName = document.getElementById('sidebar-name-notif');
+            const sbEmail = document.getElementById('sidebar-email-notif');
+            const sbCourse = document.getElementById('sidebar-course-notif');
+            const sbAvatar = document.getElementById('sidebar-avatar-notif');
+            
+            if(sbName) sbName.textContent = user.full_name;
+            if(sbEmail) sbEmail.textContent = user.email;
+            if(sbCourse) sbCourse.textContent = user.course;
+            if(sbAvatar) sbAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=003366&color=fff`;
+            
+            // 3. Load List
+            this.loadNotificationsList();
+        }
+        
+        this.initMobileMenu();
     }
 
     static loadNotificationsList() {
@@ -2103,11 +2141,16 @@ static loadMarketplace() {
         
         if (!container) return;
         
+        // Sort by newest
+        notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
         if (notifications.length === 0) {
+            // FIXED EMPTY STATE STYLING
             container.innerHTML = `
-                <div class="no-notifications" style="text-align: center; padding: 60px 20px; color: var(--gray);">
-                    <i class="fas fa-bell-slash" style="font-size: 4rem; margin-bottom: 20px;"></i>
-                    <p>No notifications yet</p>
+                <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--gray);">
+                    <i class="fas fa-bell-slash" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem;">No notifications yet</p>
+                    <small>We'll let you know when something happens!</small>
                 </div>
             `;
             return;
@@ -2115,22 +2158,52 @@ static loadMarketplace() {
 
         let html = '';
         notifications.forEach(notification => {
+            const timeAgo = this.getTimeAgo(new Date(notification.created_at));
+            
             html += `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'}" data-notification-id="${notification.id}" style="display: flex; align-items: flex-start; gap: 15px; padding: 20px; border: 1px solid var(--light-gray); border-radius: 10px; margin-bottom: 10px; background: ${notification.read ? 'white' : 'var(--light)'};">
-                    <div class="notification-icon" style="color: var(--primary); font-size: 1.2rem;">
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" 
+                     style="display: flex; gap: 15px; padding: 20px; border-bottom: 1px solid #eee; background: ${notification.read ? 'white' : '#f0f7ff'}; transition: background 0.3s;">
+                    
+                    <div style="flex-shrink: 0; width: 40px; height: 40px; background: ${notification.read ? '#eee' : '#e3f2fd'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
                         <i class="fas fa-${this.getNotificationIcon(notification.type)}"></i>
                     </div>
-                    <div class="notification-content" style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: var(--dark);">${notification.title}</h4>
-                        <p style="margin: 0 0 5px 0; color: var(--gray);">${notification.message}</p>
-                        <small style="color: var(--gray);">${new Date(notification.created_at).toLocaleString()}</small>
+                    
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <h4 style="margin: 0; color: var(--dark); font-size: 1rem;">${notification.title}</h4>
+                            <small style="color: var(--gray);">${timeAgo}</small>
+                        </div>
+                        <p style="margin: 0; color: #555; font-size: 0.95rem;">${notification.message}</p>
                     </div>
-                    ${!notification.read ? '<span class="notification-dot" style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%;"></span>' : ''}
+                    
+                    ${!notification.read ? '<div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; margin-top: 5px;"></div>' : ''}
                 </div>
             `;
         });
         
         container.innerHTML = html;
+    }
+
+    // Helper for "Time Ago" (e.g., "2 hours ago")
+    static getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        
+        return "Just now";
     }
 
     static getNotificationIcon(type) {

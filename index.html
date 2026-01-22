@@ -507,6 +507,7 @@
 
         <!-- Marketplace Page with Category Filters -->
         <!-- Marketplace Page with Dropdown Filters -->
+<!-- MARKETPLACE PAGE (Fixed Button Heights + Complete Sidebar) -->
 <div id="marketplace-page">
     <div class="navbar">
         <div class="nav-container">
@@ -538,7 +539,7 @@
     </div>
 
     <div class="dashboard-container">
-        <!-- Sidebar -->
+        <!-- COMPLETE SIDEBAR -->
         <aside class="sidebar">
             <div class="user-card">
                 <img src="https://ui-avatars.com/api/?name=User&background=003366&color=fff" alt="User Avatar" class="user-avatar" id="sidebar-avatar-mp">
@@ -559,10 +560,18 @@
                 <h4>My Account</h4>
                 <a href="#" onclick="AppManager.loadProfile()"><i class="fas fa-user"></i> My Profile</a>
                 <a href="#" onclick="AppManager.loadNotificationsPage()"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="#" onclick="AppManager.loadSettingsPage()"><i class="fas fa-cog"></i> Settings</a>
+            </div>
+
+            <div class="menu-section">
+                <h4>Selling</h4>
+                <a href="#" onclick="AppManager.loadPostItem()"><i class="fas fa-plus-circle"></i> Post New Item</a>
+                <a href="#" onclick="AppManager.loadMyListings()"><i class="fas fa-box-open"></i> My Listings</a>
+                <a href="#" onclick="AppManager.loadTradeOffers()"><i class="fas fa-exchange-alt"></i> Trade Offers</a>
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- MAIN CONTENT -->
         <main class="main-content">
             <div class="section">
                 <div class="section-header">
@@ -572,36 +581,46 @@
                     </a>
                 </div>
                 
-                <!-- DROPDOWN FILTERS (Old Format) -->
-                <div class="filter-bar" style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--light-gray); margin-bottom: 25px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <!-- FILTER BOX -->
+                <div class="filter-bar" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--light-gray); margin-bottom: 25px;">
                     
-                    <!-- Category Dropdown -->
-                    <div style="flex: 1; min-width: 200px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem;">Category</label>
-                        <select id="filter-category" class="category-select">
-                            <option value="">All Categories</option>
-                            <!-- JS will populate options here -->
-                        </select>
+                    <!-- Dropdowns Row -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Category</label>
+                            <select id="filter-category" class="category-select" style="width: 100%;">
+                                <option value="">All Categories</option>
+                                <!-- JS Populates this -->
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Program</label>
+                            <select id="filter-program" class="category-select" style="width: 100%;">
+                                <option value="">All Programs</option>
+                                <!-- JS Populates this -->
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Program Dropdown -->
-                    <div style="flex: 1; min-width: 200px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem;">Program</label>
-                        <select id="filter-program" class="category-select">
-                            <option value="">All Programs</option>
-                            <!-- JS will populate options here -->
-                        </select>
+                    <!-- Buttons Row (Side by Side - EXACT HEIGHT MATCH) -->
+                    <div style="display: flex; gap: 10px;">
+                        
+                        <!-- Apply Filter (Big Button) -->
+                        <!-- Added: height: 50px, margin: 0, padding: 0 (center with flex) -->
+                        <button id="apply-filters-btn" class="btn-primary" 
+                        style="flex: 1; height: 50px; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                            Apply Filters
+                        </button>
+                        
+                        <!-- Clear (Small Button) -->
+                        <!-- Added: height: 50px, margin: 0 -->
+                        <button id="clear-filters-btn" 
+                        style="height: 50px; margin: 0; padding: 0 25px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; color: #666; font-weight: 500; min-width: 80px; display: flex; align-items: center; justify-content: center;" 
+                        onmouseover="this.style.background='#e2e6ea'; this.style.color='#333'" 
+                        onmouseout="this.style.background='#f8f9fa'; this.style.color='#666'">
+                            Clear
+                        </button>
                     </div>
-
-                    <!-- Apply Button -->
-                    <button id="apply-filters-btn" class="btn-primary" style="height: 48px; padding: 0 30px; flex: 0 0 auto;">
-                        Apply Filters
-                    </button>
-                    
-                    <!-- Clear Button -->
-                    <button id="clear-filters-btn" style="height: 48px; padding: 0 20px; background: var(--light); border: 1px solid var(--light-gray); border-radius: 10px; cursor: pointer; color: var(--gray);">
-                        Clear
-                    </button>
                 </div>
                 
                 <!-- Items Grid -->
@@ -612,7 +631,6 @@
         </main>
     </div>
 </div>
-
         <!-- Wishlist Page -->
         <div id="wishlist-page">
             <div class="navbar">
@@ -745,226 +763,199 @@
         </div>
 
         <!-- Notifications Page -->
-        <div id="notifications-page">
-            <div class="navbar">
-                <div class="nav-container">
-                    <a href="#" class="nav-brand" onclick="AppManager.loadDashboard()">
-                        <i class="fas fa-handshake"></i>
-                        <span>Deal Me <span class="nu-text">NU</span></span>
-                    </a>
-                    
-                    <div class="nav-search">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search notifications...">
-                    </div>
-                    
-                    <button class="mobile-menu-btn">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    
-                    <div class="nav-links">
-                        <a href="#" onclick="AppManager.loadDashboard()">
-                            <i class="fas fa-home"></i>
-                            <span>Home</span>
-                        </a>
-                        <a href="#" onclick="AppManager.loadMarketplace()">
-                            <i class="fas fa-store"></i>
-                            <span>Marketplace</span>
-                        </a>
-                        <a href="#" onclick="AppManager.loadChat()">
-                            <i class="fas fa-comments"></i>
-                            <span>Messages</span>
-                        </a>
-                        <a href="#" onclick="AppManager.loadPostItem()">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Sell</span>
-                        </a>
-                        <a href="#" onclick="AppManager.loadProfile()">
-                            <img src="https://ui-avatars.com/api/?name=NU+Student&background=003366&color=fff" alt="Avatar" class="nav-avatar">
-                        </a>
-                        <a href="#" onclick="AppManager.logout()" id="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
-                    </div>
-                </div>
+        <!-- Notifications Page (Fixed Alignment) -->
+<!-- Notifications Page (Complete Sidebar) -->
+<div id="notifications-page">
+    <div class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-brand" onclick="AppManager.loadDashboard()">
+                <i class="fas fa-handshake"></i>
+                <span>Deal Me <span class="nu-text">NU</span></span>
+            </a>
+            <div class="nav-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search notifications...">
             </div>
-
-            <div class="dashboard-container">
-                <div class="sidebar">
-                    <div class="user-card">
-                        <img src="https://ui-avatars.com/api/?name=NU+Student&background=003366&color=fff" alt="User Avatar" class="user-avatar">
-                        <h3 class="user-name" id="sidebar-name-notifications">NU Student</h3>
-                        <p class="user-email" id="sidebar-email-notifications">student@nu-fairview.edu.ph</p>
-                        <span class="user-course" id="sidebar-course-notifications">BS Information Technology</span>
-                        <div class="user-rating">
-                            <i class="fas fa-star"></i>
-                            <span>4.8 (25 reviews)</span>
-                        </div>
-                    </div>
-                    
-                    <div class="menu-section">
-                        <h4>Marketplace</h4>
-                        <a href="#" onclick="AppManager.loadDashboard()">
-                            <i class="fas fa-home"></i>
-                            Dashboard
-                        </a>
-                        <a href="#" onclick="AppManager.loadMarketplace()">
-                            <i class="fas fa-store"></i>
-                            Browse Items
-                        </a>
-                        <a href="#" onclick="AppManager.loadWishlistPage()">
-                            <i class="fas fa-heart"></i>
-                            My Wishlist
-                        </a>
-                        <a href="#">
-                            <i class="fas fa-history"></i>
-                            Purchase History
-                        </a>
-                    </div>
-                    
-                    <div class="menu-section">
-                        <h4>My Account</h4>
-                        <a href="#" onclick="AppManager.loadProfile()">
-                            <i class="fas fa-user"></i>
-                            My Profile
-                        </a>
-                        <a href="#" onclick="AppManager.loadNotificationsPage()" class="active">
-                            <i class="fas fa-bell"></i>
-                            Notifications
-                        </a>
-                        <a href="#" onclick="AppManager.loadSettingsPage()">
-                            <i class="fas fa-cog"></i>
-                            Settings
-                        </a>
-                    </div>
-                    
-                    <div class="menu-section">
-                        <h4>Selling</h4>
-                        <a href="#" onclick="AppManager.loadPostItem()">
-                            <i class="fas fa-plus-circle"></i>
-                            Post New Item
-                        </a>
-                        <a href="#" onclick="AppManager.loadMyListings()">
-                            <i class="fas fa-box-open"></i>
-                            My Listings
-                        </a>
-                        <a href="#">
-                            <i class="fas fa-exchange-alt"></i>
-                            Trade Offers
-                        </a>
-                    </div>
-                </div>
-
-                <div class="main-content">
-                    <div class="section">
-                        <div class="section-header">
-                            <h1><i class="fas fa-bell"></i> Notifications</h1>
-                            <button class="btn-primary" style="padding: 10px 20px;" onclick="AppManager.markAllNotificationsAsRead()">
-                                Mark All as Read
-                            </button>
-                        </div>
-                        <div id="notifications-container">
-                            <!-- Notifications will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Settings Page -->
-       <!-- Settings Page - Updated Version -->
-<div id="settings-page">
-    <!-- ... navigation remains same ... -->
-    <div class="main-content">
-        <div class="section">
-            <h1><i class="fas fa-cog"></i> Settings</h1>
-            
-            <div class="settings-grid" style="margin-top: 30px; display: grid; gap: 30px;">
-                
-                <!-- Account Settings -->
-                <div class="settings-card">
-                    <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-user-circle"></i> Account Settings
-                    </h3>
-                    
-                    <div class="setting-group">
-                        <label>Email Notifications</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-item">
-                                <input type="checkbox" checked>
-                                <span>New messages</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox" checked>
-                                <span>Item updates</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox">
-                                <span>Promotional emails</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label>Privacy Settings</label>
-                        <div class="radio-group">
-                            <label class="radio-item">
-                                <input type="radio" name="privacy" checked>
-                                <span>Show my profile to everyone</span>
-                            </label>
-                            <label class="radio-item">
-                                <input type="radio" name="privacy">
-                                <span>Show only to NU students</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Notification Preferences -->
-                <div class="settings-card">
-                    <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-bell"></i> Notification Preferences
-                    </h3>
-                    
-                    <div class="setting-group">
-                        <label class="toggle-item">
-                            <span>Push notifications for new messages</span>
-                            <input type="checkbox" checked>
-                        </label>
-                        <label class="toggle-item">
-                            <span>Email when item is sold</span>
-                            <input type="checkbox" checked>
-                        </label>
-                        <label class="toggle-item">
-                            <span>Weekly marketplace updates</span>
-                            <input type="checkbox">
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Security Settings -->
-                <div class="settings-card">
-                    <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-shield-alt"></i> Security
-                    </h3>
-                    
-                    <div class="setting-group">
-                        <label>Change Password</label>
-                        <input type="password" placeholder="Current password" class="full-width">
-                        <input type="password" placeholder="New password" class="full-width" style="margin-top: 10px;">
-                        <input type="password" placeholder="Confirm new password" class="full-width" style="margin-top: 10px;">
-                    </div>
-                    
-                    <button class="btn-primary" style="margin-top: 20px; width: 100%;">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
+            <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            <div class="nav-links">
+                <a href="#" onclick="AppManager.loadDashboard()"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="#" onclick="AppManager.loadMarketplace()"><i class="fas fa-store"></i><span>Marketplace</span></a>
+                <a href="#" onclick="AppManager.loadChat()"><i class="fas fa-comments"></i><span>Messages</span></a>
+                <a href="#" onclick="AppManager.loadPostItem()"><i class="fas fa-plus-circle"></i><span>Sell</span></a>
+                <a href="#" onclick="AppManager.loadProfile()">
+                    <img src="https://ui-avatars.com/api/?name=User&background=003366&color=fff" alt="Avatar" class="nav-avatar">
+                </a>
+                <a href="#" onclick="AppManager.logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
             </div>
         </div>
     </div>
+
+    <div class="dashboard-container">
+        <!-- FULL COMPLETE SIDEBAR -->
+        <aside class="sidebar">
+            <div class="user-card">
+                <img src="https://ui-avatars.com/api/?name=User&background=003366&color=fff" alt="User Avatar" class="user-avatar" id="sidebar-avatar-notif">
+                <h3 class="user-name" id="sidebar-name-notif">Loading...</h3>
+                <p class="user-email" id="sidebar-email-notif">...</p>
+                <span class="user-course" id="sidebar-course-notif">Student</span>
+            </div>
+            
+            <div class="menu-section">
+                <h4>Marketplace</h4>
+                <a href="#" onclick="AppManager.loadDashboard()"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" onclick="AppManager.loadMarketplace()"><i class="fas fa-store"></i> Browse Items</a>
+                <a href="#" onclick="AppManager.loadWishlistPage()"><i class="fas fa-heart"></i> My Wishlist</a>
+                <a href="#" onclick="AppManager.loadPurchaseHistory()"><i class="fas fa-history"></i> Purchase History</a>
+            </div>
+            
+            <div class="menu-section">
+                <h4>My Account</h4>
+                <a href="#" onclick="AppManager.loadProfile()"><i class="fas fa-user"></i> My Profile</a>
+                <a href="#" onclick="AppManager.loadNotificationsPage()" class="active"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="#" onclick="AppManager.loadSettingsPage()"><i class="fas fa-cog"></i> Settings</a>
+            </div>
+
+            <div class="menu-section">
+                <h4>Selling</h4>
+                <a href="#" onclick="AppManager.loadPostItem()"><i class="fas fa-plus-circle"></i> Post New Item</a>
+                <a href="#" onclick="AppManager.loadMyListings()"><i class="fas fa-box-open"></i> My Listings</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="section">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    <h1 style="margin: 0; display: flex; align-items: center; gap: 10px; font-size: 1.8rem;">
+                        <i class="fas fa-bell" style="color: var(--primary);"></i> Notifications
+                    </h1>
+                    <button class="btn-primary" onclick="AppManager.markAllNotificationsAsRead()" style="width: auto; padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="fas fa-check-double"></i> Mark All as Read
+                    </button>
+                </div>
+                
+                <div id="notifications-container" style="min-height: 400px;">
+                    <!-- JS loads items here -->
+                </div>
+            </div>
+        </main>
+    </div>
 </div>
 
+        <!-- Settings Page -->
+       <!-- Settings Page - Updated Version -->
+<!-- Settings Page with Back Button -->
+<!-- Settings Page (Complete Sidebar) -->
+<div id="settings-page">
+    <div class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-brand" onclick="AppManager.loadDashboard()">
+                <i class="fas fa-handshake"></i>
+                <span>Deal Me <span class="nu-text">NU</span></span>
+            </a>
+            <div class="nav-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search settings...">
+            </div>
+            <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            <div class="nav-links">
+                <a href="#" onclick="AppManager.loadDashboard()"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="#" onclick="AppManager.loadMarketplace()"><i class="fas fa-store"></i><span>Marketplace</span></a>
+                <a href="#" onclick="AppManager.loadChat()"><i class="fas fa-comments"></i><span>Messages</span></a>
+                <a href="#" onclick="AppManager.loadPostItem()"><i class="fas fa-plus-circle"></i><span>Sell</span></a>
+                <a href="#" onclick="AppManager.loadProfile()">
+                    <img src="https://ui-avatars.com/api/?name=User&background=003366&color=fff" alt="Avatar" class="nav-avatar">
+                </a>
+                <a href="#" onclick="AppManager.logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- FULL COMPLETE SIDEBAR -->
+        <aside class="sidebar">
+            <div class="user-card">
+                <img src="https://ui-avatars.com/api/?name=User&background=003366&color=fff" alt="User Avatar" class="user-avatar" id="sidebar-avatar-settings">
+                <h3 class="user-name" id="sidebar-name-settings">Loading...</h3>
+                <p class="user-email" id="sidebar-email-settings">...</p>
+                <span class="user-course" id="sidebar-course-settings">Student</span>
+            </div>
+            
+            <div class="menu-section">
+                <h4>Marketplace</h4>
+                <a href="#" onclick="AppManager.loadDashboard()"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" onclick="AppManager.loadMarketplace()"><i class="fas fa-store"></i> Browse Items</a>
+                <a href="#" onclick="AppManager.loadWishlistPage()"><i class="fas fa-heart"></i> My Wishlist</a>
+                <a href="#" onclick="AppManager.loadPurchaseHistory()"><i class="fas fa-history"></i> Purchase History</a>
+            </div>
+            
+            <div class="menu-section">
+                <h4>My Account</h4>
+                <a href="#" onclick="AppManager.loadProfile()"><i class="fas fa-user"></i> My Profile</a>
+                <a href="#" onclick="AppManager.loadNotificationsPage()"><i class="fas fa-bell"></i> Notifications</a>
+                <a href="#" onclick="AppManager.loadSettingsPage()" class="active"><i class="fas fa-cog"></i> Settings</a>
+            </div>
+
+            <div class="menu-section">
+                <h4>Selling</h4>
+                <a href="#" onclick="AppManager.loadPostItem()"><i class="fas fa-plus-circle"></i> Post New Item</a>
+                <a href="#" onclick="AppManager.loadMyListings()"><i class="fas fa-box-open"></i> My Listings</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="section">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                    <button onclick="AppManager.loadProfile()" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        <i class="fas fa-arrow-left" style="color: var(--dark);"></i>
+                    </button>
+                    <h1 style="margin: 0; font-size: 1.8rem;"><i class="fas fa-cog"></i> Settings</h1>
+                </div>
+                
+                <div class="settings-grid" style="display: grid; gap: 30px;">
+                    <!-- Settings Cards (Same as before) -->
+                    <div class="settings-card">
+                        <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-user-circle"></i> Account Settings
+                        </h3>
+                        <div class="setting-group">
+                            <label>Privacy Settings</label>
+                            <div class="radio-group">
+                                <label class="radio-item"><input type="radio" name="privacy" checked> <span>Show my profile to everyone</span></label>
+                                <label class="radio-item"><input type="radio" name="privacy"> <span>Show only to NU students</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-bell"></i> Notification Preferences
+                        </h3>
+                        <div class="setting-group">
+                            <label class="toggle-item"><span>Push notifications for new messages</span> <input type="checkbox" checked></label>
+                            <label class="toggle-item"><span>Email when item is sold</span> <input type="checkbox" checked></label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                         <h3 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-shield-alt"></i> Security
+                        </h3>
+                        <div class="setting-group">
+                            <label>Change Password</label>
+                            <input type="password" placeholder="Current password" class="full-width">
+                            <input type="password" placeholder="New password" class="full-width" style="margin-top: 10px;">
+                        </div>
+                        <button class="btn-primary" style="margin-top: 20px; width: 100%;">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
         <!-- My Listings Page -->
         <div id="my-listings-page">
             <div class="navbar">
