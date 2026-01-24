@@ -1941,5 +1941,814 @@ body {
     color: var(--primary);
     font-weight: 600;
 }
+    /* 1. Ensure the container has a fixed height */
+    .item-actions {
+        display: flex;
+        gap: 10px;
+        height: 48px; /* Fixed height matches the single chat buttons */
+        margin-top: 15px;
+    }
 
+    /* 2. Force buttons to fill the height and NOT wrap text */
+    .item-actions button {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;       /* Reduce padding to fit text */
+        white-space: nowrap;   /* CRITICAL: Prevents "Mark as Sold" from breaking line */
+        font-size: 0.9rem;     /* Slightly smaller text to fit nicely */
+        border-radius: 8px;
+    }
+
+    /* 3. Style for the Chat button (Gray) */
+    .btn-chat {
+        background-color: #f8f9fa;
+        color: #003366;
+        border: none;
+        font-weight: 600;
+    }
+    .btn-chat:hover {
+        background-color: #e2e6ea;
+    }
+
+    /* 4. Style for the Sold button (Green) */
+    .btn-sold {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+    .btn-sold:hover {
+        background-color: #218838;
+    }
+    
+    /* 5. Disabled Sold Button (when item is already sold) */
+    .btn-sold:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    /* ==================== PRODUCT PREVIEW MODAL ==================== */
+
+/* The Dark Background Overlay */
+.preview-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.75); /* Dark dimming effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px); /* Modern blur effect */
+    animation: fadeIn 0.3s ease;
+}
+
+/* The Modal Box (Floating Screen) */
+.preview-modal {
+    background: white;
+    width: 90%;
+    max-width: 1000px;
+    height: 85vh; /* Takes up 85% of screen height */
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: scaleIn 0.3s ease;
+}
+
+/* Close Button (X) */
+.preview-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.05);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+.preview-close-btn:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* LEFT SIDE: Images */
+.preview-gallery {
+    flex: 1.2; /* Takes up slightly more than half space */
+    background: #f8f9fa;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.preview-main-img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    background: white;
+}
+
+.preview-thumbnails {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 5px;
+}
+
+.preview-thumb {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.7;
+    transition: 0.2s;
+}
+.preview-thumb:hover, .preview-thumb.active {
+    border-color: var(--primary);
+    opacity: 1;
+}
+
+/* RIGHT SIDE: Details */
+.preview-details {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto; /* Allows scrolling if text is long */
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-breadcrumbs {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.preview-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.preview-price {
+    font-size: 2rem;
+    color: var(--primary);
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.preview-status {
+    font-size: 0.9rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+    vertical-align: middle;
+}
+
+/* Seller Card inside Modal */
+.preview-seller {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--light);
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.preview-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 5px;
+    display: block;
+}
+.info-value {
+    font-weight: 500;
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+.preview-description {
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 30px;
+    white-space: pre-wrap; /* Keeps formatting */
+}
+
+/* Action Buttons at bottom */
+.preview-actions {
+    margin-top: auto; /* Pushes to bottom */
+    display: flex;
+    gap: 15px;
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+/* Mobile Response */
+@media (max-width: 768px) {
+    .preview-modal { flex-direction: column; height: 95vh; width: 95%; }
+    .preview-gallery { max-height: 40%; padding: 20px; }
+    .preview-details { padding: 25px; }
+    .preview-main-img { max-height: 200px; }
+}
+/* ==================== ENHANCED TRADE & BROWSE TRADES STYLES ==================== */
+
+/* 1. Fix for "Don't shrink text" in Trade Offers */
+.trade-row-card {
+    background: white;
+    border: 1px solid var(--light-gray);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center; /* Vertically center */
+    gap: 20px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.trade-row-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-color: var(--primary);
+}
+
+/* The Image Box */
+.trade-img-box {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: #f0f0f0;
+    flex-shrink: 0; /* Prevents image from shrinking */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--gray);
+}
+
+/* The Text Area - Takes up all remaining space */
+.trade-info-area {
+    flex: 1; /* This pushes the buttons to the right */
+    min-width: 0; /* Critical: allows text truncation if absolutely needed */
+}
+
+.trade-info-area h4 {
+    font-size: 1.1rem;
+    color: var(--dark);
+    margin-bottom: 5px;
+    white-space: nowrap; /* Keep title on one line if possible */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trade-info-area p {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.trade-looking-for {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #003366;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 5px;
+}
+
+/* The Actions Area - Fixed width or auto, stays on right */
+.trade-action-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    min-width: 140px; /* Ensure buttons have space */
+}
+
+/* 2. New "Browse Trades" Grid Card */
+.trade-grid-card {
+    background: white;
+    border: 1px solid var(--light-gray);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-grid-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.trade-card-header {
+    background: #003366;
+    color: white;
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trade-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-btn {
+    margin-top: auto; /* Pushes button to bottom */
+    background: var(--secondary);
+    color: var(--dark);
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.trade-btn:hover {
+    background: #e6c200;
+}
+/* ==================== BROWSE TRADES ENHANCED UI ==================== */
+
+/* The Card Container */
+.trade-card {
+    background: white;
+    border: 1px solid var(--light-gray);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%; /* Ensures equal height in grid */
+    position: relative;
+}
+
+.trade-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 51, 102, 0.1);
+    border-color: var(--primary);
+}
+
+/* Header: User Info & Date */
+.trade-card-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trade-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.trade-user img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+}
+
+.trade-date {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* Body: Title, Desc, Wants */
+.trade-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.trade-desc {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    flex-grow: 1; /* Pushes the 'Wants' box down */
+}
+
+/* The "Wants" Box */
+.trade-wants-box {
+    background: #e3f2fd; /* Light Blue */
+    border: 1px dashed #90caf9;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+}
+
+.trade-wants-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: #1565c0; /* Darker Blue */
+    margin-bottom: 5px;
+    display: block;
+}
+
+.trade-wants-text {
+    font-weight: 600;
+    color: #0d47a1;
+    font-size: 0.95rem;
+}
+
+.trade-cash-badge {
+    display: inline-block;
+    background: #e8f5e9; /* Light Green */
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* The Button */
+.btn-trade-action {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+/* "Make Offer" Button Style */
+.btn-trade-action.offer {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 51, 102, 0.2);
+}
+
+.btn-trade-action.offer:hover {
+    background: #002244;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 51, 102, 0.3);
+}
+
+/* "Your Listing" Button Style */
+.btn-trade-action.own {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: default;
+    border: 1px solid #dee2e6;
+}
+/* ==================== TRADE CARD UI (COPY THIS TO BOTTOM) ==================== */
+
+/* 1. The Card Container */
+.trade-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.trade-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: #003366; /* Primary Color */
+}
+
+/* 2. Header (User Info & Date) */
+.trade-card-header {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trade-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.trade-user img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ddd;
+}
+
+.trade-date {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* 3. Body Content */
+.trade-card-body {
+    padding: 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-title {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: #003366;
+    font-weight: 700;
+}
+
+.trade-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+/* 4. The "Looking For" Blue Box */
+.trade-wants-box {
+    background: #e3f2fd; /* Light Blue */
+    border: 1px dashed #64b5f6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.trade-wants-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #1565c0;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.trade-wants-text {
+    color: #0d47a1;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.trade-cash-badge {
+    display: inline-block;
+    margin-top: 5px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* 5. Buttons */
+.btn-trade-action {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+/* Style for "Make Offer" (Blue) */
+.btn-trade-action.offer {
+    background: #003366;
+    color: white;
+}
+.btn-trade-action.offer:hover {
+    background: #002244;
+}
+
+/* Style for "Your Listing" (Gray) */
+.btn-trade-action.own {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: default;
+    border: 1px solid #ced4da;
+}
+/* ==================== FINAL TRADE CARD UI FIX ==================== */
+
+/* 1. The Container (White Box) */
+.trade-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Forces box to fill grid height */
+    min-height: 300px; /* Minimum height to look like a box */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+    position: relative;
+}
+
+.trade-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-color: #003366;
+}
+
+/* 2. Header (Gray bar with Avatar) */
+.trade-card-header {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trade-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.trade-user img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    object-fit: cover;
+}
+
+.trade-user span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.trade-date {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* 3. Body (Content) */
+.trade-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Pushes content to fill space */
+}
+
+.trade-title {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: #003366;
+    font-weight: 700;
+}
+
+.trade-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    flex-grow: 1; /* Pushes blue box down */
+}
+
+/* 4. Blue "Wants" Box */
+.trade-wants-box {
+    background: #e3f2fd;
+    border: 1px dashed #64b5f6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.trade-wants-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1565c0;
+    margin-bottom: 5px;
+}
+
+.trade-wants-text {
+    color: #0d47a1;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.trade-cash-badge {
+    display: inline-block;
+    margin-top: 5px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* 5. Buttons */
+.btn-trade-action {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-trade-action.own {
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+    cursor: default;
+}
+
+.btn-trade-action.offer {
+    background: #003366;
+    color: white;
+}
+.btn-trade-action.offer:hover {
+    background: #002244;
+}
 }

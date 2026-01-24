@@ -7,6 +7,9 @@ class EnhancedDatabase {
         this.wishlistKey = 'dealme_nu_wishlist';
         this.chatsKey = 'dealme_nu_chats';
         this.notificationsKey = 'dealme_nu_notifications';
+        this.tradesKey = 'dealme_nu_trades';
+        this.tradeItemsKey = 'dealme_nu_trade_items';
+        this.sentOffersKey = 'dealme_nu_sent_offers';
         this.categoriesKey = 'dealme_nu_categories';
         this.initAllData();
     }
@@ -16,6 +19,9 @@ class EnhancedDatabase {
         this.initItems();
         this.initCategories();
         this.initNotifications();
+        this.initTrades();
+        this.initTradeItems();
+        this.initSentOffers();
     }
 
     initUsers() {
@@ -249,6 +255,109 @@ class EnhancedDatabase {
             ];
             localStorage.setItem(this.notificationsKey, JSON.stringify(notifications));
         }
+    }
+
+    initTrades() {
+        if (!localStorage.getItem(this.tradesKey)) {
+            const demoTrades = [
+                {
+                    id: 1,
+                    item_id: 2,
+                    item_title: 'Graphing Calculator TI-84 Plus',
+                    offered_by: 2,
+                    offered_by_name: 'NU Administrator',
+                    offered_items: ['USB flash drive', 'Notebook'],
+                    status: 'pending', // pending | accepted | declined | completed
+                    messages: [
+                        { from: 2, text: 'Hi, I can trade a USB flash drive for your calculator.', at: new Date().toISOString() }
+                    ],
+                    created_at: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem(this.tradesKey, JSON.stringify(demoTrades));
+        }
+    }
+
+    getTrades() {
+        return JSON.parse(localStorage.getItem(this.tradesKey)) || [];
+    }
+
+    saveTrades(trades) {
+        localStorage.setItem(this.tradesKey, JSON.stringify(trades));
+    }
+
+    addTrade(trade) {
+        const trades = this.getTrades();
+        trade.id = trades.length ? trades[trades.length - 1].id + 1 : 1;
+        trades.push(trade);
+        this.saveTrades(trades);
+        return trade;
+    }
+
+    updateTradeStatus(tradeId, updates) {
+        const trades = this.getTrades();
+        const idx = trades.findIndex(t => t.id === tradeId);
+        if (idx === -1) return null;
+        trades[idx] = { ...trades[idx], ...updates };
+        this.saveTrades(trades);
+        return trades[idx];
+    }
+
+    initTradeItems() {
+        if (!localStorage.getItem(this.tradeItemsKey)) {
+            const tradeItems = [
+                {
+                    id: 1,
+                    seller_id: 1,
+                    seller_name: 'Juan Dela Cruz',
+                    title: 'Macbook Pro 2019',
+                    description: 'Still works perfectly, minor scratches on the frame',
+                    condition: 'Good',
+                    cash_with_trade: 0,
+                    looking_for: 'Gaming laptop or iPad Pro',
+                    created_at: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem(this.tradeItemsKey, JSON.stringify(tradeItems));
+        }
+    }
+
+    getTradeItems() {
+        return JSON.parse(localStorage.getItem(this.tradeItemsKey)) || [];
+    }
+
+    saveTradeItems(items) {
+        localStorage.setItem(this.tradeItemsKey, JSON.stringify(items));
+    }
+
+    addTradeItem(item) {
+        const items = this.getTradeItems();
+        item.id = items.length ? items[items.length - 1].id + 1 : 1;
+        items.push(item);
+        this.saveTradeItems(items);
+        return item;
+    }
+
+    initSentOffers() {
+        if (!localStorage.getItem(this.sentOffersKey)) {
+            localStorage.setItem(this.sentOffersKey, JSON.stringify([]));
+        }
+    }
+
+    getSentOffers() {
+        return JSON.parse(localStorage.getItem(this.sentOffersKey)) || [];
+    }
+
+    saveSentOffers(offers) {
+        localStorage.setItem(this.sentOffersKey, JSON.stringify(offers));
+    }
+
+    addSentOffer(offer) {
+        const offers = this.getSentOffers();
+        offer.id = offers.length ? offers[offers.length - 1].id + 1 : 1;
+        offers.push(offer);
+        this.saveSentOffers(offers);
+        return offer;
     }
 
     // ==================== USER METHODS ====================
@@ -670,6 +779,10 @@ updateStats() {
         return null;
     }
 
+    saveChats(chats) {
+        localStorage.setItem(this.chatsKey, JSON.stringify(chats));
+    }
+
     // ==================== SESSION METHODS ====================
     setCurrentUser(user) {
         localStorage.setItem(this.currentUserKey, JSON.stringify(user));
@@ -730,6 +843,9 @@ document.addEventListener('change', (e) => {
             } else if (e.target.id === 'post-item-form') {
                 e.preventDefault();
                 this.handlePostItem();
+            } else if (e.target.id === 'forgot-password-form') {
+                e.preventDefault();
+                this.resetPassword();
             }
         });
 
@@ -895,41 +1011,34 @@ static handleCourseChange(selectedCourse) {
         this.initMobileMenu();
     }
 
-    static renderPurchaseHistory() {
+        static renderPurchaseHistory() {
         const container = document.getElementById('purchase-history-container');
+        if (!container) return;
+
         const user = this.db.getCurrentUser();
         
-        // LOGIC: Get items where buyer_id is the current user
+        // FIXED LOGIC: Strict integer comparison
         const allItems = this.db.getItems();
-        const purchases = allItems.filter(item => item.buyer_id === user.id && item.status === 'sold');
+        const purchases = allItems.filter(item => 
+            item.status === 'sold' && parseInt(item.buyer_id) === parseInt(user.id)
+        );
 
-        // Update Stats (Total Spent)
+        // Calculate Total
         const totalSpent = purchases.reduce((sum, item) => sum + item.price, 0);
         const spentEl = document.getElementById('ph-total-spent');
         if (spentEl) spentEl.textContent = `₱${totalSpent.toLocaleString()}`;
 
-        // Empty State
         if (purchases.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-shopping-bag"></i>
                     <p>You haven't bought any items yet.</p>
-                    <button class="btn-primary" style="max-width: 200px; margin: 0 auto;" onclick="AppManager.loadMarketplace()">
-                        Go Shopping
-                    </button>
-                </div>
-            `;
+                    <button class="btn-primary" style="width:auto; margin-top:15px;" onclick="AppManager.loadMarketplace()">Go Shopping</button>
+                </div>`;
             return;
         }
 
-        // Sort by date (Sold date or Created date) - Newest first
-        purchases.sort((a, b) => new Date(b.sold_at || b.created_at) - new Date(a.sold_at || a.created_at));
-
-        // Render List
-        container.innerHTML = purchases.map(item => {
-            const dateStr = item.sold_at ? new Date(item.sold_at).toLocaleDateString() : 'Recent';
-            
-            return `
+        container.innerHTML = purchases.map(item => `
             <div class="history-card">
                 <div class="history-img-box">
                     <img src="${item.images[0]}" alt="${item.title}">
@@ -937,21 +1046,19 @@ static handleCourseChange(selectedCourse) {
                 <div class="history-details">
                     <h4>${item.title}</h4>
                     <div class="history-meta">
-                        <span><i class="far fa-calendar-alt"></i> Purchased: ${dateStr}</span>
+                        <span><i class="far fa-calendar-alt"></i> ${new Date(item.sold_at || Date.now()).toLocaleDateString()}</span>
                         <span><i class="fas fa-user"></i> Seller: ${item.seller_name}</span>
-                        <span><i class="fas fa-tag"></i> ${item.category}</span>
                     </div>
                 </div>
                 <div class="history-right">
                     <span class="status-badge completed">Completed</span>
                     <div class="history-price">₱${item.price.toLocaleString()}</div>
-                    <button class="btn-chat" onclick="AppManager.startChat(${item.id})" style="border:none; background:transparent; color:var(--primary); cursor:pointer; font-size:0.9rem;">
+                    <button class="btn-chat" onclick="AppManager.startChat(${item.id})" style="padding:5px 10px; font-size:0.8rem;">
                         <i class="fas fa-comment"></i> Chat
                     </button>
                 </div>
             </div>
-            `;
-        }).join('');
+        `).join('');
     }
     // ==================== PAGE LOADING ====================
     static loadAuthPage() {
@@ -1063,6 +1170,346 @@ static handleCourseChange(selectedCourse) {
         this.initMobileMenu();
     }
 
+    // ==================== TRADE PAGE & ACTIONS ====================
+    static loadTradePage() {
+        this.currentPage = 'trade';
+        const app = document.getElementById('app');
+        const template = document.getElementById('templates').querySelector('#trade-page');
+        if (!template) return this.showNotification('Trade template not found', 'error');
+        const clone = template.cloneNode(true);
+        clone.removeAttribute('id');
+        app.innerHTML = '';
+        app.appendChild(clone);
+
+        const user = this.db.getCurrentUser();
+        if (user) {
+            const sidebarName = app.querySelector('#sidebar-name-trade');
+            const sidebarEmail = app.querySelector('#sidebar-email-trade');
+            const sidebarCourse = app.querySelector('#sidebar-course-trade');
+            const sidebarAvatar = app.querySelector('#sidebar-avatar-trade');
+            if (sidebarName) sidebarName.textContent = user.full_name;
+            if (sidebarEmail) sidebarEmail.textContent = user.email;
+            if (sidebarCourse) sidebarCourse.textContent = user.course;
+            if (sidebarAvatar) sidebarAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=003366&color=fff`;
+        }
+
+        this.renderTradeOffers();
+        this.initMobileMenu();
+    }
+
+        static renderTradeOffers() {
+        const container = document.getElementById('trade-offers-list');
+        if (!container) return;
+        const trades = this.db.getTrades().filter(t => t.status !== 'declined');
+        
+        if (!trades.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No trade offers. When others send you offers, they'll appear here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = trades.map(t => {
+            const statusColor = t.status === 'accepted' ? '#28a745' : t.status === 'counter' ? '#ffc107' : '#007bff';
+            const statusText = t.status.charAt(0).toUpperCase() + t.status.slice(1);
+
+            return `
+            <!-- NEW LAYOUT: Uses Flexbox to prevent shrinking -->
+            <div class="trade-row-card">
+                <div class="trade-img-box">
+                    <i class="fas fa-box"></i>
+                </div>
+                
+                <div class="trade-info-area">
+                    <h4>${t.item_title}</h4>
+                    <p><strong>From:</strong> ${t.offered_by_name}</p>
+                    <p><strong>Offering:</strong> ${t.offered_items.join(', ')}</p>
+                    <div class="trade-looking-for" style="background:${statusColor}20; color:${statusColor}">
+                        Status: ${statusText}
+                    </div>
+                </div>
+
+                <div class="trade-action-area">
+                    <button class="btn-primary" onclick="AppManager.openTradeOffer(${t.id})" style="width:100%; padding: 8px 15px; font-size: 0.9rem;">
+                        View Details
+                    </button>
+                    <span style="font-size: 0.8rem; color: #999;">${new Date(t.created_at).toLocaleDateString()}</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    static openTradeOffer(tradeId) {
+        const screen = document.getElementById('trade-screen');
+        if (!screen) return;
+        const trades = this.db.getTrades();
+        const t = trades.find(x => x.id === tradeId);
+        if (!t) {
+            screen.innerHTML = `<div class="empty-state"><p>Offer not found.</p></div>`;
+            return;
+        }
+
+        const isDeclined = t.status === 'declined';
+        const isAccepted = t.status === 'accepted';
+        const statusColor = isAccepted ? '#28a745' : isDeclined ? '#dc3545' : t.status === 'counter' ? '#ffc107' : '#007bff';
+        const statusLabel = isAccepted ? 'ACCEPTED' : isDeclined ? 'DECLINED' : t.status === 'counter' ? 'AWAITING RESPONSE' : 'PENDING';
+
+        let actionButtons = '';
+        if (!isDeclined && !isAccepted) {
+            actionButtons = `
+                <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="AppManager.acceptTrade(${t.id})" style="flex:1; min-width:80px;">✓ Accept</button>
+                    <button style="background:#ff6b6b; color:#fff; border:none; padding:12px; border-radius:8px; cursor:pointer; flex:1; min-width:80px;" onclick="AppManager.declineTrade(${t.id})">✕ Decline</button>
+                    <button style="background:#ffc107; color:#000; border:none; padding:12px; border-radius:8px; cursor:pointer; flex:1; min-width:80px;" onclick="AppManager.counterOffer(${t.id})">⟲ Counter</button>
+                </div>
+            `;
+        } else {
+            actionButtons = `
+                <div style="padding:12px; background:#f0f0f0; border-radius:8px; text-align:center; margin-top:12px;">
+                    <p style="color:var(--gray); margin:0;">This trade has been ${t.status}. You can still message the other party.</p>
+                </div>
+            `;
+        }
+
+        screen.innerHTML = `
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                    <h4 style="margin:0; flex:1;">${t.item_title}</h4>
+                    <span style="background:${statusColor}; color:#fff; padding:6px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; white-space:nowrap;">${statusLabel}</span>
+                </div>
+                <p style="margin:8px 0;"><strong>From:</strong> ${t.offered_by_name}</p>
+                <p style="margin:8px 0;"><strong>Offered Items:</strong> ${t.offered_items.join(', ')}</p>
+                
+                <div style="margin:12px 0;">
+                    <strong>Conversation</strong>
+                    <div id="trade-messages" style="max-height:200px; overflow-y:auto; padding:10px; border-radius:6px; background:var(--light); margin-top:8px;">
+                        ${t.messages.length === 0 ? '<p style="color:var(--gray); text-align:center;">No messages yet</p>' : 
+                          t.messages.map(m => {
+                            const isYou = m.from === this.db.getCurrentUser().id;
+                            return `
+                                <div style="margin-bottom:10px; text-align:${isYou ? 'right' : 'left'};">
+                                    <small style="color:var(--gray); display:block; margin-bottom:2px;">${isYou ? 'You' : t.offered_by_name}</small>
+                                    <div style="display:inline-block; background:${isYou ? 'var(--primary)' : '#e0e0e0'}; color:${isYou ? '#fff' : '#000'}; padding:8px 12px; border-radius:8px; max-width:80%; word-wrap:break-word;">
+                                        ${m.text}
+                                    </div>
+                                </div>
+                            `;
+                          }).join('')
+                        }
+                    </div>
+                </div>
+
+                ${actionButtons}
+
+                <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                    <input id="trade-message-input" placeholder="Write a message..." style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--light-gray); font-family:'Poppins',sans-serif;">
+                    <button class="btn-primary" onclick="AppManager.sendTradeMessage(${t.id})" style="padding:10px 16px;">Send</button>
+                </div>
+            </div>
+        `;
+    }
+
+    static createDemoTrade() {
+        const user = this.db.getCurrentUser() || { id: 1, full_name: 'Demo User' };
+        const trade = {
+            item_id: 3,
+            item_title: 'Psychology Uniform Set',
+            offered_by: user.id === 1 ? 2 : 1,
+            offered_by_name: user.id === 1 ? 'NU Administrator' : user.full_name,
+            offered_items: ['Set of pens'],
+            status: 'pending',
+            messages: [{ from: user.id, text: 'Demo trade created', at: new Date().toISOString() }],
+            created_at: new Date().toISOString()
+        };
+        this.db.addTrade(trade);
+        this.showNotification('Demo trade created', 'success');
+        this.renderTradeOffers();
+    }
+
+    static acceptTrade(tradeId) {
+        const updated = this.db.updateTradeStatus(tradeId, { status: 'accepted' });
+        if (updated) {
+            this.showNotification('Trade accepted! Check messages to coordinate next steps.', 'success');
+            // Clear trade screen
+            const screen = document.getElementById('trade-screen');
+            if (screen) {
+                screen.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Trade accepted! Select another offer to continue.</p>
+                    </div>
+                `;
+            }
+            // Refresh offers list
+            setTimeout(() => this.renderTradeOffers(), 500);
+        }
+    }
+
+    static declineTrade(tradeId) {
+        if (!confirm('Are you sure you want to decline this trade offer?')) return;
+        const trades = this.db.getTrades();
+        const idx = trades.findIndex(t => t.id === tradeId);
+        if (idx === -1) return this.showNotification('Offer not found', 'error');
+        // Remove the trade from list
+        trades.splice(idx, 1);
+        this.db.saveTrades(trades);
+        this.showNotification('Trade offer declined and removed', 'info');
+        // Clear trade screen
+        const screen = document.getElementById('trade-screen');
+        if (screen) {
+            screen.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exchange-alt"></i>
+                    <p>Select an offer to view details and respond.</p>
+                </div>
+            `;
+        }
+        // Refresh offers list
+        setTimeout(() => this.renderTradeOffers(), 500);
+    }
+
+    static counterOffer(tradeId) {
+        const text = prompt('Enter your counter-offer (e.g., condition changes, additional items, price adjustment):');
+        if (!text) return;
+        const trades = this.db.getTrades();
+        const idx = trades.findIndex(t => t.id === tradeId);
+        if (idx === -1) return this.showNotification('Offer not found', 'error');
+        trades[idx].messages.push({ from: this.db.getCurrentUser().id, text, at: new Date().toISOString() });
+        trades[idx].status = 'counter';
+        this.db.saveTrades(trades);
+        this.showNotification('Counter-offer sent! Waiting for response.', 'success');
+        this.openTradeOffer(tradeId);
+        this.renderTradeOffers();
+    }
+
+    static sendTradeMessage(tradeId) {
+        const input = document.getElementById('trade-message-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) {
+            this.showNotification('Please type a message', 'info');
+            return;
+        }
+        const trades = this.db.getTrades();
+        const idx = trades.findIndex(t => t.id === tradeId);
+        if (idx === -1) return this.showNotification('Offer not found', 'error');
+        trades[idx].messages.push({ from: this.db.getCurrentUser().id, text, at: new Date().toISOString() });
+        this.db.saveTrades(trades);
+        input.value = '';
+        this.showNotification('Message sent', 'success');
+        this.openTradeOffer(tradeId);
+    }
+
+    static switchTradeTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.trade-tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.color = 'var(--gray)';
+            btn.style.fontWeight = '500';
+        });
+
+        // Show selected tab
+        const tabEl = document.getElementById(`tab-${tabName}`);
+        if (tabEl) tabEl.style.display = 'block';
+
+        // Highlight button
+        const btnEl = document.querySelector(`[data-tab="${tabName}"]`);
+        if (btnEl) {
+            btnEl.style.borderBottomColor = 'var(--primary)';
+            btnEl.style.color = 'var(--primary)';
+            btnEl.style.fontWeight = '600';
+        }
+
+        // Load tab data
+        if (tabName === 'my-trade-items') this.renderMyTradeItems();
+        if (tabName === 'sent-offers') this.renderSentOffers();
+    }
+
+    static renderMyTradeItems() {
+        const container = document.getElementById('my-trade-items-list');
+        if (!container) return;
+        
+        const user = this.db.getCurrentUser();
+        const items = this.db.getTradeItems().filter(item => item.seller_id === user.id);
+
+        if (!items.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-cube"></i>
+                    <p>You haven't posted any items for trade yet.</p>
+                    <button class="btn-primary" onclick="AppManager.switchTradeTab('post-trade')" style="margin-top:15px;">Post Your First Item</button>
+                </div>
+            `;
+            return;
+        }
+
+        // Use the helper to generate nice cards
+        container.innerHTML = items.map(item => this.getTradeCardHTML(item, true)).join('');
+    }
+    static renderSentOffers() {
+        const container = document.getElementById('sent-offers-list');
+        if (!container) return;
+        const user = this.db.getCurrentUser();
+        const offers = this.db.getSentOffers().filter(o => o.from_user_id === user.id);
+
+        if (!offers.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-paper-plane"></i>
+                    <p>You haven't sent any trade offers yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = offers.map(offer => `
+            <div class="item-card" style="padding:12px;">
+                <h4>${offer.item_title}</h4>
+                <p style="color:var(--gray); font-size:0.9rem;">To: ${offer.to_user_name}</p>
+                <p style="font-size:0.9rem;"><strong>Offering:</strong> ${offer.offered_items.join(', ')}</p>
+                <p style="font-size:0.85rem; color:var(--gray);">Status: <strong style="color:var(--primary);">${offer.status}</strong></p>
+            </div>
+        `).join('');
+    }
+
+    static postItemForTrade() {
+        const title = document.getElementById('trade-item-title');
+        const desc = document.getElementById('trade-item-description');
+        const looking = document.getElementById('trade-looking-for');
+        const condition = document.getElementById('trade-item-condition');
+        const cash = document.getElementById('trade-cash-offer');
+
+        if (!title.value || !desc.value || !looking.value || !condition.value) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        const user = this.db.getCurrentUser();
+        const item = {
+            seller_id: user.id,
+            seller_name: user.full_name,
+            title: title.value,
+            description: desc.value,
+            condition: condition.value,
+            cash_with_trade: parseInt(cash.value) || 0,
+            looking_for: looking.value,
+            created_at: new Date().toISOString()
+        };
+
+        this.db.addTradeItem(item);
+        this.showNotification('Item posted for trade! People can now send you offers.', 'success');
+
+        // Clear form
+        document.getElementById('post-trade-form').reset();
+        this.switchTradeTab('my-trade-items');
+    }
+
+
     static loadChat() {
         this.currentPage = 'chat';
         const app = document.getElementById('app');
@@ -1115,21 +1562,144 @@ static handleCourseChange(selectedCourse) {
     static showLoginForm() {
         const loginCard = document.getElementById('login-card');
         const registerCard = document.getElementById('register-card');
+        const forgotCard = document.getElementById('forgot-password-card');
         
-        if (loginCard && registerCard) {
-            loginCard.classList.add('active');
-            registerCard.classList.remove('active');
-        }
+        if (loginCard) loginCard.style.display = 'block';
+        if (registerCard) registerCard.style.display = 'none';
+        if (forgotCard) forgotCard.style.display = 'none';
     }
 
     static showRegisterForm() {
         const loginCard = document.getElementById('login-card');
         const registerCard = document.getElementById('register-card');
+        const forgotCard = document.getElementById('forgot-password-card');
         
-        if (loginCard && registerCard) {
-            loginCard.classList.remove('active');
-            registerCard.classList.add('active');
-            this.goToStep(1);
+        if (loginCard) loginCard.style.display = 'none';
+        if (registerCard) registerCard.style.display = 'block';
+        if (forgotCard) forgotCard.style.display = 'none';
+        this.goToStep(1);
+    }
+
+    static showForgotPasswordForm(e) {
+        e.preventDefault();
+        const loginCard = document.getElementById('login-card');
+        const registerCard = document.getElementById('register-card');
+        const forgotCard = document.getElementById('forgot-password-card');
+        
+        if (loginCard) loginCard.style.display = 'none';
+        if (registerCard) registerCard.style.display = 'none';
+        if (forgotCard) forgotCard.style.display = 'block';
+        
+        // Reset form
+        document.getElementById('forgot-password-form').reset();
+        document.getElementById('forgot-error').textContent = '';
+        document.getElementById('send-code-btn').disabled = false;
+        document.getElementById('reset-password-btn').disabled = true;
+    }
+
+    static updateForgotVerificationLabel() {
+        const method = document.querySelector('input[name="verification-method"]:checked').value;
+        const input = document.getElementById('forgot-verification');
+        if (method === 'email') {
+            input.placeholder = 'Code will be sent to your email';
+        } else {
+            input.placeholder = 'Code will be sent to your phone number';
+        }
+    }
+
+    static sendForgotPasswordCode() {
+        const username = document.getElementById('forgot-username').value.trim();
+        const method = document.querySelector('input[name="verification-method"]:checked').value;
+        const errorEl = document.getElementById('forgot-error');
+        
+        if (!username) {
+            errorEl.textContent = 'Please enter your username or email';
+            return;
+        }
+        
+        // Find user
+        const user = this.db.findUserByUsernameOrEmail(username);
+        if (!user) {
+            errorEl.textContent = 'User not found. Please check your username or email.';
+            return;
+        }
+        
+        // Generate verification code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store code temporarily in session (in real app, send via email/SMS)
+        sessionStorage.setItem('forgot_password_code', code);
+        sessionStorage.setItem('forgot_password_user_id', user.id);
+        sessionStorage.setItem('forgot_password_username', username);
+        
+        // Simulate sending code
+        if (method === 'email') {
+            this.showNotification(`Verification code sent to ${user.email}`, 'success');
+        } else {
+            const masked = user.contact_number.slice(0, 4) + '****' + user.contact_number.slice(-3);
+            this.showNotification(`Verification code sent to ${masked}`, 'success');
+        }
+        
+        // For demo purposes, show code (remove in production)
+        errorEl.textContent = `Demo: Code is ${code}`;
+        errorEl.style.color = '#28a745';
+        
+        // Enable verification input
+        document.getElementById('forgot-verification').disabled = false;
+        document.getElementById('send-code-btn').disabled = true;
+    }
+
+    static handleForgotPasswordSubmit() {
+        const form = document.getElementById('forgot-password-form');
+        if (!form) return;
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.resetPassword();
+        });
+    }
+
+    static resetPassword() {
+        const codeInput = document.getElementById('forgot-verification').value.trim();
+        const storedCode = sessionStorage.getItem('forgot_password_code');
+        const userId = parseInt(sessionStorage.getItem('forgot_password_user_id'));
+        const errorEl = document.getElementById('forgot-error');
+        
+        if (!codeInput) {
+            errorEl.textContent = 'Please enter the verification code';
+            errorEl.style.color = '#dc3545';
+            return;
+        }
+        
+        if (codeInput !== storedCode) {
+            errorEl.textContent = 'Invalid verification code. Please try again.';
+            errorEl.style.color = '#dc3545';
+            return;
+        }
+        
+        // Code is valid - prompt for new password
+        const newPassword = prompt('Enter your new password (minimum 8 characters):');
+        if (!newPassword || newPassword.length < 8) {
+            this.showNotification('Password must be at least 8 characters', 'error');
+            return;
+        }
+        
+        // Update user password
+        const users = this.db.getUsers();
+        const idx = users.findIndex(u => u.id === userId);
+        if (idx !== -1) {
+            users[idx].password = newPassword;
+            this.db.saveUsers(users);
+            
+            // Clear session storage
+            sessionStorage.removeItem('forgot_password_code');
+            sessionStorage.removeItem('forgot_password_user_id');
+            sessionStorage.removeItem('forgot_password_username');
+            
+            this.showNotification('Password reset successfully! You can now login with your new password.', 'success');
+            
+            // Return to login form
+            setTimeout(() => this.showLoginForm(), 1500);
         }
     }
 
@@ -1475,18 +2045,22 @@ if (!nuEmailRegex.test(googleEmail)) {
 
     // ==================== ITEM DISPLAY & WISHLIST ====================
     static loadItems() {
-        const items = this.db.getItems();
-        const featuredContainer = document.getElementById('featured-items');
-        const recentContainer = document.getElementById('recent-items');
-        
-        if (featuredContainer) {
-            this.renderItems(items.slice(0, 4), featuredContainer);
-        }
-        
-        if (recentContainer) {
-            this.renderItems(items.slice(0, 2), recentContainer);
-        }
+    
+    const items = this.db.getItems();
+    
+    const newestItems = [...items].reverse();
+
+    const featuredContainer = document.getElementById('featured-items');
+    const recentContainer = document.getElementById('recent-items');
+    
+    if (featuredContainer) {
+        this.renderItems(newestItems.slice(0, 4), featuredContainer);
     }
+    
+    if (recentContainer) {
+        this.renderItems(newestItems.slice(0, 2), recentContainer);
+    }
+}
     // ==================== MARKETPLACE LOGIC ====================
 
 static loadMarketplace() {
@@ -1634,74 +2208,64 @@ static loadMarketplace() {
         // 5. Render
         this.renderItems(items, container);
     }
-        // ==================== RENDER ITEMS (UPDATED) ====================
-    
-    static renderItems(items, container) {
+        static renderItems(items, container) {
         if (!container) return;
-        
         container.innerHTML = '';
         
         if (items.length === 0) {
             container.innerHTML = `
-                <div class="no-items" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
-                    <i class="fas fa-box-open" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i>
-                    <p style="color: #888;">No items found matching your criteria</p>
-                </div>
-            `;
+                <div class="no-items">
+                    <i class="fas fa-box-open"></i>
+                    <p>No items found</p>
+                </div>`;
             return;
         }
         
         const currentUser = this.db.getCurrentUser();
         
         items.forEach(item => {
+            // Check if item is in wishlist to decide solid (fas) or outline (far)
             const isInWishlist = currentUser ? this.db.isInWishlist(currentUser.id, item.id) : false;
             const isSeller = currentUser && currentUser.id === item.seller_id;
             
-            // Generate the Chat Button logic
-            // If it's my item: Show "View" or nothing
-            // If it's not my item: Show "Chat" button
-            let actionButtons = '';
-            
-            if (isSeller) {
-                actionButtons = `
-                    <button class="btn-sold" style="flex:1; padding:10px; background:#e9ecef; color:#666; border:none; border-radius:8px; cursor:not-allowed;" disabled>
-                        <i class="fas fa-user"></i> Your Item
-                    </button>
-                `;
-            } else {
-                actionButtons = `
-                    <button class="btn-chat" onclick="AppManager.startChat(${item.id})" style="flex:1; padding:10px; background:var(--light); color:var(--primary); border:none; border-radius:8px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s;">
-                        <i class="fas fa-comment"></i> Chat
-                    </button>
-                `;
-            }
-
             const itemCard = document.createElement('div');
             itemCard.className = 'item-card';
             itemCard.innerHTML = `
-                <div class="item-image">
+                <div class="item-image" style="cursor: pointer;" onclick="AppManager.openProductPreview(${item.id})">
                     <img src="${item.images[0]}" alt="${item.title}">
                     <span class="item-status ${item.status}">${item.status.toUpperCase()}</span>
-                    <button class="item-wishlist ${isInWishlist ? 'active' : ''}" onclick="AppManager.toggleWishlist(${item.id}, this)">
+                    
+                    <!-- FIX: Call toggleWishlist directly and stop propagation -->
+                    <button class="item-wishlist" onclick="event.stopPropagation(); AppManager.toggleWishlist(${item.id}, this)">
                         <i class="${isInWishlist ? 'fas' : 'far'} fa-heart"></i>
                     </button>
                 </div>
+                
                 <div class="item-info">
-                    <h3>${item.title}</h3>
+                    <h3 style="cursor: pointer;" onclick="AppManager.openProductPreview(${item.id})">${item.title}</h3>
                     <div class="item-price">₱${item.price.toLocaleString()}</div>
                     <div class="item-meta">
                         <span><i class="fas fa-user"></i> ${item.seller_name}</span>
                         <span><i class="fas fa-map-marker-alt"></i> ${item.location}</span>
                     </div>
-                    <div class="item-actions" style="display:flex; gap:10px; margin-top:10px;">
-                        ${actionButtons}
+                    
+                    <div class="item-actions" style="display: flex; gap: 10px; height: 48px; margin-top: 15px;">
+                        <button class="btn-chat" onclick="event.stopPropagation(); AppManager.startChat(${item.id})" style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="fas fa-comment"></i> Chat
+                        </button>
+                        ${isSeller ? `
+                        <button class="btn-sold mark-sold" onclick="event.stopPropagation(); AppManager.markItemAsSold(${item.id})" ${item.status === 'sold' ? 'disabled' : ''} style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 8px; white-space: nowrap; padding: 0 5px;">
+                            <i class="fas fa-check-circle"></i> ${item.status === 'sold' ? 'Sold' : 'Mark as Sold'}
+                        </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
             container.appendChild(itemCard);
         });
     }
-    static toggleWishlist(itemId, button) {
+
+        static toggleWishlist(itemId, button) {
         const currentUser = this.db.getCurrentUser();
         if (!currentUser) {
             this.showNotification('Please login to add items to wishlist', 'error');
@@ -1712,16 +2276,25 @@ static loadMarketplace() {
         const icon = button.querySelector('i');
         
         if (isInWishlist) {
+            // Remove from DB
             this.db.removeFromWishlist(currentUser.id, itemId);
-            icon.className = 'far fa-heart';
+            // Update Icon Visuals
+            icon.className = 'far fa-heart'; 
             this.showNotification('Removed from wishlist', 'info');
         } else {
+            // Add to DB
             this.db.addToWishlist(currentUser.id, itemId);
+            // Update Icon Visuals
             icon.className = 'fas fa-heart';
+            
+            // Add a little pop animation
+            icon.style.transform = "scale(1.3)";
+            setTimeout(() => icon.style.transform = "scale(1)", 200);
+            
             this.showNotification('Added to wishlist', 'success');
         }
         
-        // Update wishlist page if open
+        // If we are currently ON the wishlist page, reload the items so the removed one disappears
         if (this.currentPage === 'wishlist') {
             this.loadWishlistItems();
         }
@@ -1742,18 +2315,30 @@ static loadMarketplace() {
     }
 
     static loadUserListings(userId) {
-        const activeItems = this.db.getUserItems(userId);
+        // Regular Items
+        const activeItems = this.db.getUserItems(userId).filter(i => i.status === 'available');
         const soldItems = this.db.getSoldItems(userId);
         
+        // Trade Items
+        const tradeItems = this.db.getTradeItems().filter(i => i.seller_id === userId);
+        
+        // Render Active
         const activeContainer = document.getElementById('my-listings-items');
+        if (activeContainer) this.renderItems(activeItems, activeContainer);
+        
+        // Render Sold
         const soldContainer = document.getElementById('sold-items-list');
-        
-        if (activeContainer) {
-            this.renderItems(activeItems, activeContainer);
-        }
-        
-        if (soldContainer) {
-            this.renderItems(soldItems, soldContainer);
+        if (soldContainer) this.renderItems(soldItems, soldContainer);
+
+        // Render Trades (USING THE NEW UI)
+        const tradeContainer = document.getElementById('trade-listings-list');
+        if (tradeContainer) {
+            if (tradeItems.length === 0) {
+                tradeContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exchange-alt"></i><p>No trade listings.</p></div>`;
+            } else {
+                // Use the helper to generate nice cards
+                tradeContainer.innerHTML = tradeItems.map(item => this.getTradeCardHTML(item, true)).join('');
+            }
         }
     }
 
@@ -1868,39 +2453,229 @@ static loadMarketplace() {
         });
     }
 
-    // ==================== CHAT SYSTEM ====================
-        // ==================== START CHAT LOGIC (UPDATED) ====================
+        // 1. UPDATE LOAD PROFILE TO FETCH ITEMS
+    static loadProfile() {
+        this.currentPage = 'profile';
+        const app = document.getElementById('app');
+        const profile = document.getElementById('templates').querySelector('#profile-page').cloneNode(true);
+        app.innerHTML = '';
+        app.appendChild(profile);
+        
+        const user = this.db.getCurrentUser();
+        if (user) {
+            this.updateUserInfoOnPage(user, 'profile');
+            this.updateProfileDetails(user);
+            
+            // Update Large Profile Image
+            const bigImg = document.getElementById('profile-img-large');
+            if(bigImg) bigImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=003366&color=fff&size=100`;
 
+            // Load Items (Default to 'all')
+            this.filterProfileItems('all');
+        }
+        
+        this.initMobileMenu();
+    }
+
+    // 2. NEW FUNCTION TO FILTER ITEMS
+            static filterProfileItems(filterType) {
+        const user = this.db.getCurrentUser();
+        if (!user) return;
+
+        // Visual: Update Active Tab
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if(btn.hasAttribute('data-profile-tab')) {
+                btn.style.borderBottomColor = 'transparent';
+                btn.style.color = 'var(--gray)';
+                btn.style.fontWeight = '500';
+            }
+        });
+        
+        const activeBtn = document.querySelector(`[data-profile-tab="${filterType}"]`);
+        if(activeBtn) {
+            activeBtn.style.borderBottomColor = 'var(--primary)';
+            activeBtn.style.color = 'var(--primary)';
+            activeBtn.style.fontWeight = '600';
+        }
+
+        const container = document.getElementById('profile-items-grid');
+        if (!container) return;
+        container.innerHTML = '';
+
+        // --- LOGIC: MERGE ITEMS FOR "ALL" ---
+        const allSaleItems = this.db.getUserItems(user.id);
+        const allTradeItems = this.db.getTradeItems().filter(i => i.seller_id === user.id);
+        
+        // Add a 'type' flag to sorting
+        const saleTagged = allSaleItems.map(i => ({...i, type: 'sale'}));
+        const tradeTagged = allTradeItems.map(i => ({...i, type: 'trade'}));
+
+        let displayItems = [];
+
+        if (filterType === 'all') {
+            // Combine and sort by date (newest first)
+            displayItems = [...saleTagged, ...tradeTagged].sort((a, b) => 
+                new Date(b.created_at) - new Date(a.created_at)
+            );
+        } else if (filterType === 'trade') {
+            displayItems = tradeTagged;
+        } else if (filterType === 'available') {
+            displayItems = saleTagged.filter(i => i.status !== 'sold');
+        } else if (filterType === 'sold') {
+            displayItems = saleTagged.filter(i => i.status === 'sold');
+        }
+
+        if (displayItems.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>No items found.</p></div>`;
+            return;
+        }
+
+        // --- RENDER HYBRID GRID (Sales Cards + Trade Cards) ---
+        // We cannot use simple .map().join() because renderItems (for sales) uses DOM elements for events.
+        // We will loop and append.
+        
+        displayItems.forEach(item => {
+            if (item.type === 'trade') {
+                // Render Trade Card
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = this.getTradeCardHTML(item, true); // true = isOwner
+                container.appendChild(wrapper.firstElementChild);
+            } else {
+                // Render Sale Card (reuse existing logic by creating a temp container then moving it)
+                const tempDiv = document.createElement('div');
+                this.renderItems([item], tempDiv); // Uses your existing standard card renderer
+                if(tempDiv.firstElementChild) {
+                    container.appendChild(tempDiv.firstElementChild);
+                }
+            }
+        });
+    }
+        // ==================== FLOATING PREVIEW LOGIC ====================
+
+            static openProductPreview(itemId) {
+        const item = this.db.getItems().find(i => i.id === itemId);
+        if (!item) return;
+
+        const currentUser = this.db.getCurrentUser();
+        const isInWishlist = currentUser ? this.db.isInWishlist(currentUser.id, itemId) : false;
+
+        // Tags
+        const tags = item.programs ? item.programs.map(p => `<span class="preview-tag">${p}</span>`).join('') : '';
+
+        // DELIVERY LOGIC - Select correct icon
+        const deliveryMethods = item.delivery_options || ["Flexible"];
+        const deliveryHtml = deliveryMethods.map(method => {
+            let icon = 'fa-question-circle';
+            if (method.includes('Meetup')) icon = 'fa-handshake';
+            if (method.includes('Delivery')) icon = 'fa-truck';
+            return `<span class="delivery-tag"><i class="fas ${icon}"></i> ${method}</span>`;
+        }).join('');
+
+        const html = `
+            <div class="preview-overlay" id="preview-overlay" onclick="AppManager.closeProductPreview(event)">
+                <div class="preview-modal">
+                    <button class="preview-close-btn" onclick="AppManager.closeProductPreview(event, true)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <div class="preview-gallery">
+                        <img src="${item.images[0]}" class="preview-main-img" id="main-preview-img">
+                        <div class="preview-thumbnails">
+                            <img src="${item.images[0]}" class="preview-thumb">
+                        </div>
+                    </div>
+                    
+                    <div class="preview-details">
+                        <div class="preview-breadcrumbs">${item.category} / ${item.subcategory || 'General'}</div>
+                        <h1 class="preview-title">${item.title}</h1>
+                        <div class="preview-price">₱${item.price.toLocaleString()}</div>
+                        
+                        <div class="preview-seller">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_name)}&background=003366&color=fff" 
+                                 style="width: 45px; height: 45px; border-radius: 50%;">
+                            <div>
+                                <div style="font-weight: 600;">${item.seller_name}</div>
+                                <div style="font-size: 0.85rem; color: #666;">Seller</div>
+                            </div>
+                        </div>
+                        
+                        <div class="delivery-box">
+                            <small style="display:block; color:#003366; margin-bottom:8px; text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; font-weight:700;">
+                                Preferences
+                            </small>
+                            ${deliveryHtml}
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <strong>Location:</strong> ${item.location} <br>
+                            <strong>Posted:</strong> ${new Date(item.created_at).toLocaleDateString()}
+                        </div>
+
+                        <div style="margin-bottom: 20px;">${tags}</div>
+                        
+                        <h4 style="margin-bottom: 10px;">Description</h4>
+                        <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">${item.description}</p>
+                        
+                        <div style="margin-top: auto; display: flex; gap: 15px; align-items: center;">
+                            <button class="btn-primary" onclick="AppManager.startChat(${item.id}); AppManager.closeProductPreview(event, true);" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px;">
+                                <i class="fas fa-comment-dots"></i> Message Seller
+                            </button>
+                            
+                            <button class="modal-wishlist-btn" onclick="AppManager.toggleWishlist(${item.id}, this)">
+                                <i class="${isInWishlist ? 'fas' : 'far'} fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const container = document.createElement('div');
+        container.id = 'product-preview-wrapper';
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        document.body.style.overflow = 'hidden';
+    }
+        static closeProductPreview(event, force = false) {
+        if (force || event.target.id === 'preview-overlay') {
+            const wrapper = document.getElementById('product-preview-wrapper');
+            if (wrapper) {
+                wrapper.remove();
+                document.body.style.overflow = 'auto'; // FIX: Enables scrolling again
+            }
+        }
+    }
+    // ==================== CHAT SYSTEM ====================
     static startChat(itemId) {
         const currentUser = this.db.getCurrentUser();
-        
-        // 1. Check Login
         if (!currentUser) {
-            alert('Please login to chat with sellers.');
+            this.showNotification('Please login to start a chat', 'error');
             return;
         }
 
         const item = this.db.getItems().find(i => i.id === itemId);
         if (!item) return;
 
-        // 2. Prevent chatting with yourself
         if (currentUser.id === item.seller_id) {
-            alert("This is your own item!");
+            this.showNotification('You cannot chat with yourself about your own item', 'error');
             return;
         }
 
-        // 3. Create or Get Existing Chat ID
-        // This method checks if a chat already exists for this item/users
+        // Create or get existing chat
         const chat = this.db.createChat(currentUser.id, item.seller_id, itemId);
         
-        // 4. Load the Chat Page
-        this.loadChat();
+        // Add notification for seller
+        this.db.addNotification({
+            user_id: item.seller_id,
+            type: 'new_chat',
+            title: 'New Chat Started',
+            message: `${currentUser.full_name} started a chat about "${item.title}"`
+        });
 
-        // 5. Automatically Open the specific chat
-        // We use setTimeout to ensure the DOM (Sidebar list) is rendered before we try to click it
+        this.showNotification('Chat started! Check your messages.', 'success');
         setTimeout(() => {
-            this.openChat(chat.id);
-        }, 100);
+            this.loadChat();
+        }, 1000);
     }
 
     static loadChats() {
@@ -1950,6 +2725,127 @@ static loadMarketplace() {
         });
         
         container.innerHTML = html;
+        
+        // Bind click event to open chat detail
+        const chatItems = document.querySelectorAll('.chat-item');
+        chatItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const chatId = parseInt(item.dataset.chatId);
+                this.openChat(chatId);
+            });
+        });
+    }
+
+    static openChat(chatId) {
+        const currentUser = this.db.getCurrentUser();
+        if (!currentUser) return;
+
+        const chat = this.db.getChats(currentUser.id).find(c => c.id === chatId);
+        if (!chat) return;
+
+        const otherUserId = chat.user1_id === currentUser.id ? chat.user2_id : chat.user1_id;
+        const otherUser = this.db.getUsers().find(u => u.id === otherUserId);
+        const item = this.db.getItems().find(i => i.id === chat.item_id);
+
+        if (!otherUser || !item) return;
+
+        // Load chat detail page
+        this.currentPage = 'chat-detail';
+        const app = document.getElementById('app');
+        const chatDetail = document.getElementById('templates').querySelector('#chat-detail-page').cloneNode(true);
+        app.innerHTML = '';
+        app.appendChild(chatDetail);
+
+        // Update user info on sidebar
+        this.updateUserInfoOnPage(currentUser, 'chat');
+
+        // Update chat header
+        document.getElementById('chat-user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.full_name)}&background=003366&color=fff`;
+        document.getElementById('chat-user-name').textContent = otherUser.full_name;
+        document.getElementById('chat-item-title').textContent = item.title;
+
+        // Load messages
+        this.loadChatMessages(chatId);
+
+        // Bind form submission
+        const form = document.getElementById('chat-message-form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.sendChatMessage(chatId, currentUser.id);
+            });
+        }
+
+        // Initialize mobile menu
+        this.initMobileMenu();
+
+        // Store current chat ID for sending messages
+        this.currentChatId = chatId;
+    }
+
+    static loadChatMessages(chatId) {
+        const currentUser = this.db.getCurrentUser();
+        if (!currentUser) return;
+
+        const chats = this.db.getChats(currentUser.id);
+        const chat = chats.find(c => c.id === chatId);
+        if (!chat) return;
+
+        const container = document.getElementById('messages-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (chat.messages.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--gray);">
+                    <i class="fas fa-comments" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                    <p>No messages yet. Start the conversation!</p>
+                </div>
+            `;
+            return;
+        }
+
+        chat.messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            const isSent = msg.sender_id === currentUser.id;
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-bubble">${msg.message}</div>
+                    <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                </div>
+            `;
+            container.appendChild(messageDiv);
+        });
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    static sendChatMessage(chatId, senderId) {
+        const inputField = document.getElementById('chat-message-input');
+        if (!inputField) return;
+
+        const message = inputField.value.trim();
+        if (!message) return;
+
+        // Add message to chat
+        this.db.addMessage(chatId, senderId, message);
+
+        // Clear input
+        inputField.value = '';
+
+        // Reload messages
+        this.loadChatMessages(chatId);
+
+        // Update last activity
+        const chats = this.db.getChats(this.db.getCurrentUser().id);
+        const chat = chats.find(c => c.id === chatId);
+        if (chat) {
+            chat.last_activity = new Date().toISOString();
+            this.db.saveChats(chats);
+        }
     }
 
     static markItemAsSold(itemId) {
@@ -2099,37 +2995,12 @@ static loadMarketplace() {
     }
 
     // ==================== NOTIFICATION SYSTEM ====================
-        // ==================== NOTIFICATIONS LOGIC ====================
+    static loadNotifications() {
+        const currentUser = this.db.getCurrentUser();
+        if (!currentUser) return;
 
-    static loadNotificationsPage() {
-        this.currentPage = 'notifications';
-        const app = document.getElementById('app');
-        
-        // 1. Template
-        const template = document.getElementById('templates').querySelector('#notifications-page');
-        const clone = template.cloneNode(true);
-        clone.removeAttribute('id');
-        app.innerHTML = '';
-        app.appendChild(clone);
-        
-        // 2. Sidebar Info
-        const user = this.db.getCurrentUser();
-        if (user) {
-            const sbName = document.getElementById('sidebar-name-notif');
-            const sbEmail = document.getElementById('sidebar-email-notif');
-            const sbCourse = document.getElementById('sidebar-course-notif');
-            const sbAvatar = document.getElementById('sidebar-avatar-notif');
-            
-            if(sbName) sbName.textContent = user.full_name;
-            if(sbEmail) sbEmail.textContent = user.email;
-            if(sbCourse) sbCourse.textContent = user.course;
-            if(sbAvatar) sbAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=003366&color=fff`;
-            
-            // 3. Load List
-            this.loadNotificationsList();
-        }
-        
-        this.initMobileMenu();
+        const notifications = this.db.getNotifications(currentUser.id);
+        this.updateNotificationBadge();
     }
 
     static loadNotificationsList() {
@@ -2141,16 +3012,11 @@ static loadMarketplace() {
         
         if (!container) return;
         
-        // Sort by newest
-        notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
         if (notifications.length === 0) {
-            // FIXED EMPTY STATE STYLING
             container.innerHTML = `
-                <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--gray);">
-                    <i class="fas fa-bell-slash" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                    <p style="font-size: 1.1rem;">No notifications yet</p>
-                    <small>We'll let you know when something happens!</small>
+                <div class="no-notifications" style="text-align: center; padding: 60px 20px; color: var(--gray);">
+                    <i class="fas fa-bell-slash" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                    <p>No notifications yet</p>
                 </div>
             `;
             return;
@@ -2158,52 +3024,22 @@ static loadMarketplace() {
 
         let html = '';
         notifications.forEach(notification => {
-            const timeAgo = this.getTimeAgo(new Date(notification.created_at));
-            
             html += `
-                <div class="notification-item ${notification.read ? 'read' : 'unread'}" 
-                     style="display: flex; gap: 15px; padding: 20px; border-bottom: 1px solid #eee; background: ${notification.read ? 'white' : '#f0f7ff'}; transition: background 0.3s;">
-                    
-                    <div style="flex-shrink: 0; width: 40px; height: 40px; background: ${notification.read ? '#eee' : '#e3f2fd'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}" data-notification-id="${notification.id}" style="display: flex; align-items: flex-start; gap: 15px; padding: 20px; border: 1px solid var(--light-gray); border-radius: 10px; margin-bottom: 10px; background: ${notification.read ? 'white' : 'var(--light)'};">
+                    <div class="notification-icon" style="color: var(--primary); font-size: 1.2rem;">
                         <i class="fas fa-${this.getNotificationIcon(notification.type)}"></i>
                     </div>
-                    
-                    <div style="flex: 1;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <h4 style="margin: 0; color: var(--dark); font-size: 1rem;">${notification.title}</h4>
-                            <small style="color: var(--gray);">${timeAgo}</small>
-                        </div>
-                        <p style="margin: 0; color: #555; font-size: 0.95rem;">${notification.message}</p>
+                    <div class="notification-content" style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: var(--dark);">${notification.title}</h4>
+                        <p style="margin: 0 0 5px 0; color: var(--gray);">${notification.message}</p>
+                        <small style="color: var(--gray);">${new Date(notification.created_at).toLocaleString()}</small>
                     </div>
-                    
-                    ${!notification.read ? '<div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; margin-top: 5px;"></div>' : ''}
+                    ${!notification.read ? '<span class="notification-dot" style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%;"></span>' : ''}
                 </div>
             `;
         });
         
         container.innerHTML = html;
-    }
-
-    // Helper for "Time Ago" (e.g., "2 hours ago")
-    static getTimeAgo(date) {
-        const seconds = Math.floor((new Date() - date) / 1000);
-        
-        let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + " years ago";
-        
-        interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + " months ago";
-        
-        interval = seconds / 86400;
-        if (interval > 1) return Math.floor(interval) + " days ago";
-        
-        interval = seconds / 3600;
-        if (interval > 1) return Math.floor(interval) + " hours ago";
-        
-        interval = seconds / 60;
-        if (interval > 1) return Math.floor(interval) + " minutes ago";
-        
-        return "Just now";
     }
 
     static getNotificationIcon(type) {
@@ -2246,7 +3082,7 @@ static loadMarketplace() {
     }
 
     // ==================== POST ITEM ====================
-    static handlePostItem() {
+            static handlePostItem() {
         const currentUser = this.db.getCurrentUser();
         if (!currentUser) {
             this.showNotification('Please login to post items', 'error');
@@ -2258,39 +3094,60 @@ static loadMarketplace() {
         const description = document.getElementById('item-description').value;
         const location = document.getElementById('item-location').value;
         const category = document.getElementById('item-category').value;
-        const subcategory = document.getElementById('item-subcategory').value;
-        const programs = Array.from(document.getElementById('item-programs').selectedOptions).map(opt => opt.value);
+        
+        // 1. CAPTURE DELIVERY OPTIONS
+        const deliveryCheckboxes = document.querySelectorAll('input[name="delivery"]:checked');
+        let deliveryOptions = Array.from(deliveryCheckboxes).map(cb => cb.value);
+        if (deliveryOptions.length === 0) deliveryOptions = ["Contact Seller for details"];
+
+        const subcategory = ""; 
+
+        // --- 2. SMART PROGRAM LOGIC (THE FIX) ---
+        const programCheckboxes = document.querySelectorAll('input[name="programs"]:checked');
+        let programs = Array.from(programCheckboxes).map(cb => cb.value);
+
+        // Check if there are any "Specific" programs selected (anything that is NOT "All Programs")
+        const hasSpecificPrograms = programs.some(p => p !== "All Programs");
+
+        if (hasSpecificPrograms) {
+            // If specific programs are selected, REMOVE "All Programs" from the list
+            // This ensures only "BS IT", "BS CS", etc. show up in the preview
+            programs = programs.filter(p => p !== "All Programs");
+        } 
+        else if (programs.length === 0) {
+            // If nothing is selected at all, default to "All Programs"
+            programs = ["All Programs"];
+        }
+        // If only "All Programs" was checked, it stays as ["All Programs"]
 
         if (!title || !price || !description || !location || !category) {
-            this.showNotification('Please fill in all required fields', 'error');
+            this.showNotification('Please fill in all required fields (*)', 'error');
             return;
         }
 
         const itemData = {
             title: title,
             price: price,
-            images: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop"], // Default image for demo
+            images: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop"],
             status: "available",
             category: category,
-            subcategory: subcategory || '',
+            subcategory: subcategory,
             seller_id: currentUser.id,
             seller_name: currentUser.full_name,
             location: location,
             description: description,
             programs: programs,
+            delivery_options: deliveryOptions,
             views: 0,
-            wishlist_count: 0
+            wishlist_count: 0,
+            created_at: new Date().toISOString()
         };
 
         this.db.addItem(itemData);
-        
         this.showNotification('Item posted successfully!', 'success');
         
-        setTimeout(() => {
-            this.loadMarketplace();
-        }, 1500);
+        setTimeout(() => { this.loadMarketplace(); }, 1000);
     }
-
     // ==================== UTILITY FUNCTIONS ====================
     static updateUserInfo(user) {
         const sidebarName = document.getElementById('sidebar-name');
@@ -2414,6 +3271,229 @@ static loadMarketplace() {
             element.textContent = message;
             element.style.color = 'var(--accent)';
         }
+    }
+        // ==================== NEW BROWSE TRADES LOGIC ====================
+
+    static loadBrowseTrades() {
+        this.currentPage = 'browse-trades';
+        const app = document.getElementById('app');
+        
+        // Clone the new template
+        const template = document.getElementById('templates').querySelector('#browse-trades-page');
+        const clone = template.cloneNode(true);
+        clone.removeAttribute('id');
+        app.innerHTML = '';
+        app.appendChild(clone);
+        
+        const user = this.db.getCurrentUser();
+        if (user) {
+            this.updateUserInfoOnPage(user, 'bt'); // 'bt' for browse trades
+        }
+        
+        this.renderBrowseTradesItems();
+        this.initMobileMenu();
+    }
+         // Helper to generate the card HTML (Matches the CSS above)
+    static getTradeCardHTML(item, isOwner) {
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_name)}&background=003366&color=fff`;
+        const dateStr = new Date(item.created_at).toLocaleDateString();
+
+        return `
+        <div class="trade-card">
+            <div class="trade-card-header">
+                <div class="trade-user">
+                    <img src="${avatarUrl}" alt="Avatar">
+                    <span>${item.seller_name}</span>
+                </div>
+                <span class="trade-date">${dateStr}</span>
+            </div>
+            <div class="trade-card-body">
+                <h3 class="trade-title">${item.title}</h3>
+                <p class="trade-desc">${item.description}</p>
+                
+                <div class="trade-wants-box">
+                    <span class="trade-wants-label">Looking For:</span>
+                    <div class="trade-wants-text">${item.looking_for}</div>
+                    ${item.cash_with_trade ? `<div class="trade-cash-badge">+ ₱${item.cash_with_trade.toLocaleString()} Cash</div>` : ''}
+                </div>
+
+                ${isOwner ? 
+                    `<button class="btn-trade-action own"><i class="fas fa-user"></i> Your Listing</button>` :
+                    `<button class="btn-trade-action offer" onclick="AppManager.openMakeOfferModal(${item.id})"><i class="fas fa-hand-holding"></i> Make an Offer</button>`
+                }
+            </div>
+        </div>`;
+    }
+
+            static renderBrowseTradesItems() {
+        const container = document.getElementById('browse-trades-grid');
+        if (!container) return;
+
+        // Get items listed for trade
+        const tradeItems = this.db.getTradeItems(); 
+        const currentUser = this.db.getCurrentUser();
+
+        // Empty State
+        if (tradeItems.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exchange-alt"></i>
+                    <p>No items currently listed for trade.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = tradeItems.map(item => {
+            const isOwner = currentUser && item.seller_id === currentUser.id;
+            
+            // Generate Avatar URL
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller_name)}&background=003366&color=fff`;
+            
+            // Use a placeholder image if none exists (for trade items)
+            const imgUrl = item.images && item.images.length > 0 
+                ? item.images[0] 
+                : "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop";
+
+            return `
+            <div class="item-card">
+                <!-- Image Section -->
+                <div class="item-image" style="cursor: pointer;">
+                    <img src="${imgUrl}" alt="${item.title}">
+                    <span class="item-status" style="background: var(--secondary); color: var(--dark);">TRADE</span>
+                </div>
+                
+                <!-- Info Section -->
+                <div class="item-info">
+                    <h3 style="cursor: pointer; margin-bottom: 5px;">${item.title}</h3>
+                    
+                    <!-- "Wants" Section (Replaces Price) -->
+                    <div style="color: var(--primary); font-weight: 700; font-size: 1.1rem; margin-bottom: 10px; line-height: 1.3;">
+                        <span style="font-size: 0.8rem; color: var(--gray); font-weight: 500; display: block;">Wants:</span>
+                        ${item.looking_for}
+                    </div>
+                    
+                    <!-- Location & Seller -->
+                    <div class="item-meta">
+                        <span><i class="fas fa-user"></i> ${item.seller_name}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${item.location || 'NU Fairview'}</span>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div class="item-actions" style="margin-top: 15px;">
+                        ${isOwner ? 
+                            `<button class="btn-chat" disabled style="background: #eee; color: #999; width: 100%;">
+                                Your Listing
+                            </button>` 
+                            :
+                            `<button class="btn-primary" onclick="AppManager.openMakeOfferModal(${item.id})" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fas fa-hand-holding"></i> Make an Offer
+                            </button>`
+                        }
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+    // ==================== MAKE OFFER MODAL LOGIC ====================
+
+    static openMakeOfferModal(tradeItemId) {
+        // Find the item being traded for
+        const targetItem = this.db.getTradeItems().find(i => i.id === tradeItemId);
+        if (!targetItem) return;
+
+        // Create Modal HTML
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.innerHTML = `
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>Make a Trade Offer</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 15px;">You are offering to trade for: <strong>${targetItem.title}</strong></p>
+                    
+                    <div class="form-group">
+                        <label>What are you offering? *</label>
+                        <input type="text" id="offer-items" placeholder="e.g., My Canon Camera + Tripod" class="full-width">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Add Cash? (Optional)</label>
+                        <input type="number" id="offer-cash" placeholder="Amount in ₱" class="full-width">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message (Optional)</label>
+                        <textarea id="offer-message" rows="3" placeholder="Condition details, meetup preference..." class="full-width"></textarea>
+                    </div>
+
+                    <button class="btn-primary" id="submit-offer-btn">
+                        <i class="fas fa-paper-plane"></i> Send Offer
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close Event
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+
+        // Submit Event
+        modal.querySelector('#submit-offer-btn').addEventListener('click', () => {
+            this.submitTradeOffer(targetItem, modal);
+        });
+    }
+
+        static submitTradeOffer(targetItem, modalElement) {
+        const offeredItems = document.getElementById('offer-items').value;
+        const cash = document.getElementById('offer-cash').value;
+        const message = document.getElementById('offer-message').value;
+        const currentUser = this.db.getCurrentUser();
+
+        if (!offeredItems) {
+            alert("Please specify what you are offering.");
+            return;
+        }
+
+        // Create the Sent Offer Object
+        const offer = {
+            id: Date.now(),
+            to_user_id: targetItem.seller_id,
+            to_user_name: targetItem.seller_name,
+            from_user_id: currentUser.id,
+            item_title: targetItem.title,
+            offered_items: [offeredItems + (cash ? ` + ₱${cash}` : '')],
+            status: 'pending',
+            created_at: new Date().toISOString()
+        };
+
+        // Save to DB
+        this.db.addSentOffer(offer);
+
+        // Add Notification
+        this.db.addNotification({
+            user_id: targetItem.seller_id,
+            type: 'default',
+            title: 'New Trade Offer',
+            message: `${currentUser.full_name} sent an offer for your ${targetItem.title}`
+        });
+
+        // Close Modal
+        if(modalElement) modalElement.remove();
+        
+        this.showNotification("Offer sent! Redirecting...", "success");
+
+        // === REDIRECT LOGIC ===
+        // 1. Load the main Trade Page
+        this.loadTradePage();
+        
+        // 2. Wait a tiny bit for the HTML to render, then switch to the "Sent Offers" tab
+        setTimeout(() => {
+            this.switchTradeTab('sent-offers');
+        }, 100);
     }
 
     static showNotification(message, type = 'info') {
